@@ -56,4 +56,5 @@ pub enum DataKey {
     DiscountCodeUsed(BytesN<32>),        // sha256_hash -> bool (spent)
     WithdrawalCap(Address),              // token_address -> max amount per day
     DailyWithdrawalAmount(Address, u64), // (token_address, day_timestamp) -> amount withdrawn
+    IsPaused,                            // bool – global circuit breaker flag
 }

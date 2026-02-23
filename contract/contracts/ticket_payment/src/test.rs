@@ -3075,3 +3075,130 @@ fn test_platform_fee_withdrawal_with_cap() {
         30_0000000i128
     );
 }
+
+#[test]
+#[should_panic]
+fn test_set_pause_unauthorized_panics() {
+    let env = Env::default();
+    let (client, _admin, _, _, _) = setup_test(&env);
+
+    // Auth not mocked, should panic
+    client.set_pause(&true);
+}
+
+#[test]
+fn test_set_pause_and_resume() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _, _, _) = setup_test(&env);
+
+    assert!(!client.get_is_paused());
+    client.set_pause(&true);
+    assert!(client.get_is_paused());
+    client.set_pause(&false);
+    assert!(!client.get_is_paused());
+}
+
+#[test]
+fn test_process_payment_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, usdc_id, _, _) = setup_test(&env);
+    client.set_pause(&true);
+
+    let buyer = Address::generate(&env);
+    let res = client.try_process_payment(
+        &String::from_str(&env, "p1"),
+        &String::from_str(&env, "event_1"),
+        &String::from_str(&env, "tier_1"),
+        &buyer,
+        &usdc_id,
+        &1000_0000000i128,
+        &1,
+        &None,
+        &None,
+    );
+    assert_eq!(res, Err(Ok(TicketPaymentError::ContractPaused)));
+}
+
+#[test]
+fn test_refund_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _, _, _) = setup_test(&env);
+    client.set_pause(&true);
+    let res = client.try_request_guest_refund(&String::from_str(&env, "p1"));
+    assert_eq!(res, Err(Ok(TicketPaymentError::ContractPaused)));
+}
+
+#[test]
+fn test_claim_revenue_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, usdc_id, _, _) = setup_test(&env);
+    client.set_pause(&true);
+    let res = client.try_claim_revenue(&String::from_str(&env, "event_1"), &usdc_id);
+    assert_eq!(res, Err(Ok(TicketPaymentError::ContractPaused)));
+}
+
+#[test]
+fn test_transfer_ticket_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _, _, _) = setup_test(&env);
+    client.set_pause(&true);
+    let to = Address::generate(&env);
+    let res = client.try_transfer_ticket(&String::from_str(&env, "p1"), &to, &None);
+    assert_eq!(res, Err(Ok(TicketPaymentError::ContractPaused)));
+}
+
+#[test]
+fn test_trigger_bulk_refund_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _, _, _) = setup_test(&env);
+    client.set_pause(&true);
+    let res = client.try_trigger_bulk_refund(&String::from_str(&env, "event_1"), &10);
+    assert_eq!(res, Err(Ok(TicketPaymentError::ContractPaused)));
+}
+
+#[test]
+fn test_upgrade_works_when_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _admin, _, _, _) = setup_test(&env);
+    client.set_pause(&true);
+
+    let dummy_id = env.register(DummyUpgradeable, ());
+    let new_wasm_hash = match dummy_id.executable() {
+        Some(soroban_sdk::Executable::Wasm(hash)) => hash,
+        _ => panic!("Not a Wasm contract"),
+    };
+
+    // Should not panic, upgrade should succeed despite pause
+    client.upgrade(&new_wasm_hash);
+}
+
+#[test]
+fn test_withdraw_platform_fees_works_when_paused() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(TicketPaymentContract, ());
+    let client = TicketPaymentContractClient::new(&env, &contract_id);
+    let admin = Address::generate(&env);
+    let usdc_id = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
+    let platform_wallet = Address::generate(&env);
+    let registry_id = env.register(MockEventRegistry, ());
+    client.initialize(&admin, &usdc_id, &platform_wallet, &registry_id);
+
+    // Need a tiny bit of fees stored initially so we don't get ArithmeticError (amount=0) or InsufficientFees
+    // Actually just testing try_withdraw_platform_fees doesn't return ContractPaused is enough.
+    client.set_pause(&true);
+    let res = client.try_withdraw_platform_fees(&1000i128, &usdc_id);
+
+    // It should hit InsufficientFees, not ContractPaused
+    assert_eq!(res, Err(Ok(TicketPaymentError::InsufficientFees)));
+}
