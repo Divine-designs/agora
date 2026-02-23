@@ -120,6 +120,17 @@ pub fn is_initialized(env: &Env) -> bool {
         .unwrap_or(false)
 }
 
+pub fn set_is_paused(env: &Env, paused: bool) {
+    env.storage().persistent().set(&DataKey::IsPaused, &paused);
+}
+
+pub fn is_paused(env: &Env) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false)
+}
+
 pub fn add_token_to_whitelist(env: &Env, token: &Address) {
     env.storage()
         .persistent()

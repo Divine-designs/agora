@@ -15,6 +15,7 @@ pub enum AgoraEvent {
     RevenueClaimed,
     FeeSettled,
     GlobalPromoApplied,
+    ContractPaused,
 }
 
 #[contracttype]
@@ -116,5 +117,12 @@ pub struct GlobalPromoAppliedEvent {
     pub event_id: String,
     pub promo_bps: u32,
     pub discount_amount: i128,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractPausedEvent {
+    pub paused: bool,
     pub timestamp: u64,
 }
