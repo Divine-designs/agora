@@ -5,20 +5,21 @@ use crate::storage::{
     get_admin, get_bulk_refund_index, get_daily_withdrawn_amount, get_event_balance,
     get_event_payments, get_event_registry, get_payment, get_platform_wallet,
     get_total_fees_collected_by_token, get_transfer_fee, get_withdrawal_cap, has_price_switched,
-    is_discount_hash_used, is_discount_hash_valid, is_initialized, is_token_whitelisted,
+    is_discount_hash_used, is_discount_hash_valid, is_initialized, is_paused, is_token_whitelisted,
     mark_discount_hash_used, remove_payment_from_buyer_index, remove_token_from_whitelist,
-    set_admin, set_bulk_refund_index, set_event_registry, set_initialized, set_platform_wallet,
-    set_price_switched, set_transfer_fee, set_usdc_token, set_withdrawal_cap, store_payment,
-    subtract_from_active_escrow_by_token, subtract_from_active_escrow_total,
+    set_admin, set_bulk_refund_index, set_event_registry, set_initialized, set_is_paused,
+    set_platform_wallet, set_price_switched, set_transfer_fee, set_usdc_token, set_withdrawal_cap,
+    store_payment, subtract_from_active_escrow_by_token, subtract_from_active_escrow_total,
     subtract_from_total_fees_collected_by_token, update_event_balance,
 };
 use crate::types::{Payment, PaymentStatus};
 use crate::{
     error::TicketPaymentError,
     events::{
-        AgoraEvent, BulkRefundProcessedEvent, ContractUpgraded, DiscountCodeAppliedEvent,
-        FeeSettledEvent, GlobalPromoAppliedEvent, InitializationEvent, PaymentProcessedEvent,
-        PaymentStatusChangedEvent, PriceSwitchedEvent, RevenueClaimedEvent, TicketTransferredEvent,
+        AgoraEvent, BulkRefundProcessedEvent, ContractPausedEvent, ContractUpgraded,
+        DiscountCodeAppliedEvent, FeeSettledEvent, GlobalPromoAppliedEvent, InitializationEvent,
+        PaymentProcessedEvent, PaymentStatusChangedEvent, PriceSwitchedEvent, RevenueClaimedEvent,
+        TicketTransferredEvent,
     },
 };
 use soroban_sdk::{contract, contractimpl, token, Address, Bytes, BytesN, Env, String, Vec};
@@ -136,6 +137,28 @@ impl TicketPaymentContract {
         Ok(())
     }
 
+    /// Pauses or resumes the contract. Only callable by the multi-sig admin.
+    /// Upgrade and emergency-withdrawal remain available while the contract is paused.
+    pub fn set_pause(env: Env, paused: bool) -> Result<(), TicketPaymentError> {
+        let admin = get_admin(&env).ok_or(TicketPaymentError::NotInitialized)?;
+        admin.require_auth();
+        set_is_paused(&env, paused);
+        #[allow(deprecated)]
+        env.events().publish(
+            (AgoraEvent::ContractPaused,),
+            ContractPausedEvent {
+                paused,
+                timestamp: env.ledger().timestamp(),
+            },
+        );
+        Ok(())
+    }
+
+    /// Returns the current paused state of the contract.
+    pub fn get_is_paused(env: Env) -> bool {
+        is_paused(&env)
+    }
+
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
         let admin = get_admin(&env).expect("Admin not set");
         admin.require_auth();
@@ -190,6 +213,9 @@ impl TicketPaymentContract {
     ) -> Result<String, TicketPaymentError> {
         if !is_initialized(&env) {
             panic!("Contract not initialized");
+        }
+        if is_paused(&env) {
+            return Err(TicketPaymentError::ContractPaused);
         }
         buyer_address.require_auth();
 
@@ -481,6 +507,9 @@ impl TicketPaymentContract {
     pub fn request_guest_refund(env: Env, payment_id: String) -> Result<(), TicketPaymentError> {
         if !is_initialized(&env) {
             panic!("Contract not initialized");
+        }
+        if is_paused(&env) {
+            return Err(TicketPaymentError::ContractPaused);
         }
 
         let mut payment =
@@ -777,6 +806,9 @@ impl TicketPaymentContract {
         event_id: String,
         token_address: Address,
     ) -> Result<i128, TicketPaymentError> {
+        if is_paused(&env) {
+            return Err(TicketPaymentError::ContractPaused);
+        }
         let event_registry_addr = get_event_registry(&env);
         let registry_client = event_registry::Client::new(&env, &event_registry_addr);
 
@@ -906,6 +938,9 @@ impl TicketPaymentContract {
         if !is_initialized(&env) {
             panic!("Contract not initialized");
         }
+        if is_paused(&env) {
+            return Err(TicketPaymentError::ContractPaused);
+        }
 
         let mut payment =
             get_payment(&env, payment_id.clone()).ok_or(TicketPaymentError::PaymentNotFound)?;
@@ -999,6 +1034,9 @@ impl TicketPaymentContract {
     ) -> Result<u32, TicketPaymentError> {
         if !is_initialized(&env) {
             panic!("Contract not initialized");
+        }
+        if is_paused(&env) {
+            return Err(TicketPaymentError::ContractPaused);
         }
 
         let event_registry_addr = get_event_registry(&env);
