@@ -7,6 +7,16 @@ import { dataEvents } from "@/components/events/mockups";
 import { RegistrationBox } from "@/components/events/registration-box";
 import { notFound } from "next/navigation";
 import React, { use } from "react";
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/events/event-location-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-black/5 animate-pulse flex items-center justify-center">
+      <span className="text-black/50 font-medium font-heading">Loading map...</span>
+    </div>
+  ),
+});
 
 export default function EventDetailPage({
   params,
@@ -91,12 +101,7 @@ export default function EventDetailPage({
                 {event.location}
               </p>
               <div className="relative aspect-[16/10] w-full rounded-[24px] overflow-hidden border border-black/10">
-                <Image
-                  src="/images/map-placeholder.png"
-                  alt="Location Map"
-                  fill
-                  className="object-cover"
-                />
+                <Map location={event.location} />
               </div>
             </div>
           </div>
@@ -217,12 +222,7 @@ export default function EventDetailPage({
                 {event.location}
               </p>
               <div className="relative aspect-[16/10] w-full rounded-[24px] overflow-hidden border border-black/10">
-                <Image
-                  src="/images/map-placeholder.png"
-                  alt="Location Map"
-                  fill
-                  className="object-cover"
-                />
+                <Map location={event.location} />
               </div>
             </div>
           </div>
