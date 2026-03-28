@@ -408,9 +408,38 @@ fn remove_from_organizer_index(env: &Env, organizer: &Address, event_id: String)
 
 /// Stores an event receipt
 pub fn store_event_receipt(env: &Env, receipt: crate::types::EventReceipt) {
+    let organizer = receipt.organizer_address.clone();
+    let event_id = receipt.event_id.clone();
+
     env.storage()
         .persistent()
-        .set(&DataKey::EventReceipt(receipt.event_id.clone()), &receipt);
+        .set(&DataKey::EventReceipt(event_id.clone()), &receipt);
+
+    if !has_organizer_receipt(env, &organizer, event_id.clone()) {
+        let count = get_organizer_receipt_count(env, &organizer);
+        let shard_id = count / SHARD_SIZE;
+
+        let mut shard: Vec<String> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::OrganizerReceiptShard(organizer.clone(), shard_id))
+            .unwrap_or_else(|| vec![env]);
+
+        shard.push_back(event_id.clone());
+        env.storage().persistent().set(
+            &DataKey::OrganizerReceiptShard(organizer.clone(), shard_id),
+            &shard,
+        );
+
+        env.storage().persistent().set(
+            &DataKey::OrganizerReceiptCount(organizer.clone()),
+            &(count + 1),
+        );
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::OrganizerReceipt(organizer, event_id), &true);
+    }
 }
 
 /// Retrieves an event receipt by its event_id
@@ -418,6 +447,33 @@ pub fn get_event_receipt(env: &Env, event_id: String) -> Option<crate::types::Ev
     env.storage()
         .persistent()
         .get(&DataKey::EventReceipt(event_id))
+}
+
+/// Retrieves all archived receipts associated with an organizer.
+pub fn get_organizer_receipts(env: &Env, organizer: &Address) -> Vec<crate::types::EventReceipt> {
+    let count = get_organizer_receipt_count(env, organizer);
+    let mut receipts = vec![env];
+
+    if count == 0 {
+        return receipts;
+    }
+
+    let num_shards = count.div_ceil(SHARD_SIZE);
+    for i in 0..num_shards {
+        let shard: Vec<String> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::OrganizerReceiptShard(organizer.clone(), i))
+            .unwrap_or_else(|| vec![env]);
+
+        for event_id in shard.iter() {
+            if let Some(receipt) = get_event_receipt(env, event_id) {
+                receipts.push_back(receipt);
+            }
+        }
+    }
+
+    receipts
 }
 
 /// Checks if an event with the given event_id exists.
@@ -438,6 +494,21 @@ pub fn has_organizer_event(env: &Env, organizer: &Address, event_id: String) -> 
     env.storage()
         .persistent()
         .has(&DataKey::OrganizerEvent(organizer.clone(), event_id))
+}
+
+/// Retrieves the total number of archived event receipts for an organizer.
+pub fn get_organizer_receipt_count(env: &Env, organizer: &Address) -> u32 {
+    env.storage()
+        .persistent()
+        .get(&DataKey::OrganizerReceiptCount(organizer.clone()))
+        .unwrap_or(0)
+}
+
+/// Checks if an organizer has a specific archived receipt in their index.
+pub fn has_organizer_receipt(env: &Env, organizer: &Address, event_id: String) -> bool {
+    env.storage()
+        .persistent()
+        .has(&DataKey::OrganizerReceipt(organizer.clone(), event_id))
 }
 
 /// Retrieves all event_ids associated with an organizer by iterating through shards.

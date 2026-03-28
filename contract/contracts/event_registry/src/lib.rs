@@ -531,6 +531,11 @@ impl EventRegistry {
         storage::get_organizer_events(&env, &organizer)
     }
 
+    /// Retrieves all archived event receipts for an organizer.
+    pub fn get_organizer_receipts(env: Env, organizer: Address) -> Vec<EventReceipt> {
+        storage::get_organizer_receipts(&env, &organizer)
+    }
+
     /// Updates the platform fee percentage. Only callable by the administrator.
     pub fn set_platform_fee(env: Env, new_fee_percent: u32) -> Result<(), EventRegistryError> {
         let admin = storage::get_admin(&env).ok_or(EventRegistryError::NotInitialized)?;

@@ -317,6 +317,12 @@ pub enum DataKey {
     PromoExpiry,
     /// Mapping of event_id to EventReceipt (Persistent) for archived events
     EventReceipt(String),
+    /// Individual entry for an organizer's archived event receipt (Persistent)
+    OrganizerReceipt(Address, String),
+    /// Sharded mapping of organizer address to archived event receipt ids (Persistent)
+    OrganizerReceiptShard(Address, u32),
+    /// Total number of archived event receipts for an organizer (Persistent)
+    OrganizerReceiptCount(Address),
     /// Counter for proposal IDs
     ProposalCounter,
     /// Mapping of proposal_id to Proposal
