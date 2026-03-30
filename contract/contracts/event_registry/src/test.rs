@@ -4627,7 +4627,10 @@ fn test_register_event_restocking_fee_overflow_returns_invalid_fee_calculation()
         tags: None,
     });
 
-    assert_eq!(result, Err(Ok(EventRegistryError::RestockingFeeExceedsTicketPrice)));
+    assert_eq!(
+        result,
+        Err(Ok(EventRegistryError::RestockingFeeExceedsTicketPrice))
+    );
 }
 
 #[test]
