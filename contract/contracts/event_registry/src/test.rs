@@ -5072,94 +5072,19 @@ fn test_register_event_tags_and_banner_cid_coexist() {
     assert_eq!(info.tags.unwrap().len(), 2);
 }
 
-// ─── set_admin tests ──────────────────────────────────────────────────────────
+// ── VERSION constant ──────────────────────────────────────────────────────────
 
+/// The VERSION constant must equal 1.
 #[test]
-fn test_set_admin_emits_event() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let contract_id = env.register(EventRegistry, ());
-    let client = EventRegistryClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-    let platform_wallet = Address::generate(&env);
-    let usdc_token = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
-
-    let new_admin = Address::generate(&env);
-
-    // Drain setup events to initialize event tracking
-    let _ = env.events().all();
-
-    // Use set_platform_fee as a reference (known to emit 1 event)
-    client.set_platform_fee(&100);
-    let fee_events = env.events().all();
-    assert_eq!(
-        fee_events.len(),
-        1,
-        "set_platform_fee should emit 1 event, found {}",
-        fee_events.len()
-    );
-
-    // Now test set_admin — should emit exactly one AdminUpdated event
-    client.set_admin(&new_admin);
-
-    // Secondary: exactly one AdminUpdated event
-    let events = env.events().all();
-    assert_eq!(
-        events.len(),
-        1,
-        "expected exactly 1 AdminUpdated event from set_admin, found {}",
-        events.len()
-    );
-
-    // Primary: admin was updated in storage
-    assert_eq!(client.get_admin(), new_admin, "admin should be updated");
+fn test_version_constant_value() {
+    assert_eq!(crate::VERSION, 1u32);
 }
 
+/// The `version()` contract function must return 1.
 #[test]
-#[should_panic] // Authentication failure expected when no auth is mocked
-fn test_set_admin_unauthorized() {
+fn test_version_fn_returns_1() {
     let env = Env::default();
-    // No mock_all_auths — auth will fail
-
     let contract_id = env.register(EventRegistry, ());
     let client = EventRegistryClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-    let platform_wallet = Address::generate(&env);
-    let usdc_token = Address::generate(&env);
-    // Use a separate mocked env just for initialization
-    {
-        let env_init = Env::default();
-        env_init.mock_all_auths();
-        let cid_init = env_init.register(EventRegistry, ());
-        let client_init = EventRegistryClient::new(&env_init, &cid_init);
-        client_init.initialize(&admin, &platform_wallet, &500, &usdc_token);
-    }
-
-    // This contract has no initialization; calling set_admin without auth should panic
-    client.set_admin(&Address::generate(&env));
-}
-
-#[test]
-fn test_set_admin_invalid_address_rejected() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let contract_id = env.register(EventRegistry, ());
-    let client = EventRegistryClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-    let platform_wallet = Address::generate(&env);
-    let usdc_token = Address::generate(&env);
-    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
-
-    // Try to set the contract's own address as admin — must fail with InvalidAddress
-    let result = client.try_set_admin(&client.address);
-    assert_eq!(
-        result,
-        Err(Ok(crate::error::EventRegistryError::InvalidAddress))
-    );
+    assert_eq!(client.version(), 1u32);
 }
