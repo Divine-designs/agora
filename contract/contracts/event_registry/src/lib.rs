@@ -399,6 +399,7 @@ impl EventRegistry {
             custom_fee_bps: None,
             banner_cid: args.banner_cid,
             tags: args.tags,
+            is_private: args.is_private,
             end_time: args.end_time,
             feedback_cid: None,
         };
@@ -907,8 +908,11 @@ impl EventRegistry {
             );
         }
 
-        storage::update_event(&env, event_info);
-        storage::add_to_global_tickets_sold(&env, quantity_i128);
+        storage::update_event(&env, event_info.clone());
+        // Private events are excluded from the global tickets sold counter.
+        if !event_info.is_private {
+            storage::add_to_global_tickets_sold(&env, quantity_i128);
+        }
 
         env.events().publish(
             (AgoraEvent::InventoryIncremented,),
@@ -973,8 +977,11 @@ impl EventRegistry {
             .ok_or(EventRegistryError::SupplyUnderflow)?;
 
         let new_supply = event_info.current_supply;
-        storage::update_event(&env, event_info);
-        storage::subtract_from_global_tickets_sold(&env, 1);
+        storage::update_event(&env, event_info.clone());
+        // Private events are excluded from the global tickets sold counter.
+        if !event_info.is_private {
+            storage::subtract_from_global_tickets_sold(&env, 1);
+        }
 
         env.events().publish(
             (crate::events::AgoraEvent::InventoryDecremented,),

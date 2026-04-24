@@ -58,6 +58,7 @@ fn test_register_and_get_series() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     client.register_event(&EventRegistrationArgs {
@@ -76,6 +77,7 @@ fn test_register_and_get_series() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -129,6 +131,7 @@ fn test_issue_and_use_series_pass() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     let series_id = String::from_str(&env, "series_1");
@@ -306,6 +309,7 @@ fn test_storage_operations() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     };
@@ -398,6 +402,7 @@ fn test_get_total_tickets_sold_uses_event_current_supply() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     });
@@ -445,6 +450,7 @@ fn test_get_active_events_count_tracks_status_changes() {
             target_deadline: None,
             banner_cid: None,
             tags: None,
+            is_private: false,
             end_time: 0,
         });
     }
@@ -504,6 +510,7 @@ fn test_organizer_events_list() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     };
@@ -536,6 +543,7 @@ fn test_organizer_events_list() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     };
@@ -595,6 +603,7 @@ fn test_get_organizer_receipts_returns_archived_receipts() {
             custom_fee_bps: None,
             banner_cid: None,
             tags: None,
+            is_private: false,
             end_time: 0,
             feedback_cid: None,
         };
@@ -696,6 +705,7 @@ fn test_register_event_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -750,6 +760,7 @@ fn test_register_event_name_trimming() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -816,6 +827,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now - 1),
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidTargetDeadline)));
@@ -837,6 +849,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now),
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidTargetDeadline)));
@@ -858,6 +871,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now + 100),
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -895,6 +909,7 @@ fn test_register_event_rejects_contract_as_organizer() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -936,6 +951,7 @@ fn test_register_event_rejects_zero_organizer_address() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -979,6 +995,7 @@ fn test_register_event_unlimited_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1024,6 +1041,7 @@ fn test_register_duplicate_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1043,6 +1061,7 @@ fn test_register_duplicate_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::EventAlreadyExists)));
@@ -1081,6 +1100,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(
@@ -1108,6 +1128,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(
@@ -1135,6 +1156,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(
@@ -1180,6 +1202,7 @@ fn test_get_event_payment_info() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1225,6 +1248,7 @@ fn test_update_event_status() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     client.update_event_status(&event_id, &false);
@@ -1269,6 +1293,7 @@ fn test_event_inactive_error() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     client.update_event_status(&event_id, &false);
@@ -1314,6 +1339,7 @@ fn test_complete_event_lifecycle() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1371,6 +1397,7 @@ fn test_update_metadata_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1421,6 +1448,7 @@ fn test_update_metadata_invalid_cid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1518,6 +1546,7 @@ fn test_set_custom_event_fee() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1575,6 +1604,7 @@ fn test_set_custom_event_fee_exceeds_max() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1647,6 +1677,7 @@ fn test_increment_inventory_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1721,6 +1752,7 @@ fn test_increment_inventory_max_supply_exceeded() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1790,6 +1822,7 @@ fn test_increment_inventory_bulk_exceeds_max_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1859,6 +1892,7 @@ fn test_increment_inventory_unlimited_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -1946,6 +1980,7 @@ fn test_increment_inventory_inactive_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2008,6 +2043,7 @@ fn test_increment_inventory_persists_across_reads() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2088,6 +2124,7 @@ fn test_tier_limit_exceeds_max_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(
@@ -2150,6 +2187,7 @@ fn test_tier_not_found() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2213,6 +2251,7 @@ fn test_tier_supply_exceeded() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2293,6 +2332,7 @@ fn test_multiple_tiers_inventory() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2373,6 +2413,7 @@ fn test_increment_inventory_supply_overflow() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     });
@@ -2443,6 +2484,7 @@ fn test_increment_inventory_tier_sold_overflow() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
         feedback_cid: None,
     });
@@ -2490,6 +2532,7 @@ fn test_update_event_status_noop_skips_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2568,6 +2611,7 @@ fn test_blacklist_prevents_event_registration() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2614,6 +2658,7 @@ fn test_update_metadata_noop_skips_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2699,6 +2744,7 @@ fn test_blacklist_suspends_active_events() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2827,6 +2873,7 @@ fn test_register_event_with_resale_cap() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2872,6 +2919,7 @@ fn test_register_event_resale_cap_zero() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2917,6 +2965,7 @@ fn test_register_event_resale_cap_none() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -2962,6 +3011,7 @@ fn test_postpone_event_sets_grace_period() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3014,6 +3064,7 @@ fn test_register_event_resale_cap_invalid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidResaleCapBps)));
@@ -3055,6 +3106,7 @@ fn test_cancel_event_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3099,6 +3151,7 @@ fn test_archive_event_rejects_active_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3141,6 +3194,7 @@ fn test_cancel_already_cancelled_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3184,6 +3238,7 @@ fn test_update_status_on_cancelled_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3829,6 +3884,7 @@ fn test_register_event_with_banner_cid() {
         target_deadline: None,
         banner_cid: banner_cid.clone(),
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3880,6 +3936,7 @@ fn test_goal_met_event_fires_only_once() {
         target_deadline: None,
         banner_cid: banner_cid.clone(),
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -3939,6 +3996,7 @@ fn test_register_event_without_banner_cid() {
         target_deadline: Some(1000),
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4007,6 +4065,7 @@ fn test_series_pass_issued_at_timestamp() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4085,6 +4144,7 @@ fn base_args(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     }
 }
@@ -4423,6 +4483,7 @@ fn test_cancelled_status_guard() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4558,6 +4619,7 @@ fn test_register_event_restocking_fee_exceeds_tier_price_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4615,6 +4677,7 @@ fn test_register_event_restocking_fee_equal_to_tier_price_succeeds() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4668,6 +4731,7 @@ fn test_register_event_restocking_fee_zero_always_valid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4721,6 +4785,7 @@ fn test_register_event_restocking_fee_overflow_returns_invalid_fee_calculation()
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
 
@@ -4806,6 +4871,7 @@ fn test_register_event_tier_limit_overflow() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::SupplyOverflow)));
@@ -4862,6 +4928,7 @@ fn test_register_event_invalid_tier_limit_negative() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::InvalidQuantity)));
@@ -4916,6 +4983,7 @@ fn test_register_event_milestone_overflow() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     });
     assert_eq!(result, Err(Ok(EventRegistryError::SupplyOverflow)));
@@ -4955,6 +5023,7 @@ fn tags_base_args(env: &Env, event_id: &str, organizer: &Address) -> EventRegist
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time: 0,
     }
 }
@@ -5150,6 +5219,225 @@ fn test_version_fn_returns_1() {
     assert_eq!(client.version(), 1u32);
 }
 
+// ── Private Event Support Tests ───────────────────────────────────────────────
+
+fn setup_private_test(env: &Env) -> (EventRegistryClient<'static>, Address, Address, Address) {
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(env, &contract_id);
+    let admin = Address::generate(env);
+    let organizer = Address::generate(env);
+    let platform_wallet = Address::generate(env);
+    let usdc_token = Address::generate(env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+    let ticket_payment = Address::generate(env);
+    client.set_ticket_payment_contract(&ticket_payment);
+    (client, admin, organizer, ticket_payment)
+}
+
+fn register_event_with_privacy(
+    env: &Env,
+    client: &EventRegistryClient,
+    organizer: &Address,
+    event_id: &str,
+    is_private: bool,
+) {
+    let metadata_cid = String::from_str(
+        env,
+        "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    );
+    let mut tiers = Map::new(env);
+    tiers.set(
+        String::from_str(env, "tier_1"),
+        crate::types::TicketTier {
+            name: String::from_str(env, "General"),
+            price: 1000,
+            tier_limit: 100,
+            current_sold: 0,
+            is_refundable: false,
+            auction_config: soroban_sdk::vec![env],
+        },
+    );
+    client.register_event(&EventRegistrationArgs {
+        event_id: String::from_str(env, event_id),
+        name: String::from_str(env, "Test Event"),
+        organizer_address: organizer.clone(),
+        payment_address: test_payment_address(env),
+        metadata_cid,
+        max_supply: 100,
+        milestone_plan: None,
+        tiers,
+        refund_deadline: 0,
+        restocking_fee: 0,
+        resale_cap_bps: None,
+        min_sales_target: None,
+        target_deadline: None,
+        banner_cid: None,
+        tags: None,
+        is_private,
+        end_time: 0,
+    });
+}
+
+/// A public event increments the global managed events counter.
+#[test]
+fn test_public_event_increments_managed_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    assert_eq!(client.get_managed_events_count(), 0);
+    register_event_with_privacy(&env, &client, &organizer, "pub_evt", false);
+    assert_eq!(client.get_managed_events_count(), 1);
+}
+
+/// A private event does NOT increment the global managed events counter.
+#[test]
+fn test_private_event_excluded_from_managed_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    assert_eq!(client.get_managed_events_count(), 0);
+    register_event_with_privacy(&env, &client, &organizer, "priv_evt", true);
+    assert_eq!(client.get_managed_events_count(), 0);
+}
+
+/// A public event increments the global active events counter.
+#[test]
+fn test_public_event_increments_active_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    assert_eq!(client.get_active_events_count(), 0);
+    register_event_with_privacy(&env, &client, &organizer, "pub_evt", false);
+    assert_eq!(client.get_active_events_count(), 1);
+}
+
+/// A private event does NOT increment the global active events counter.
+#[test]
+fn test_private_event_excluded_from_active_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    assert_eq!(client.get_active_events_count(), 0);
+    register_event_with_privacy(&env, &client, &organizer, "priv_evt", true);
+    assert_eq!(client.get_active_events_count(), 0);
+}
+
+/// Mixed registration: only public events count toward global counters.
+#[test]
+fn test_mixed_public_private_events_counters() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    register_event_with_privacy(&env, &client, &organizer, "pub_1", false);
+    register_event_with_privacy(&env, &client, &organizer, "priv_1", true);
+    register_event_with_privacy(&env, &client, &organizer, "pub_2", false);
+    register_event_with_privacy(&env, &client, &organizer, "priv_2", true);
+
+    // 2 public events counted, 2 private excluded
+    assert_eq!(client.get_managed_events_count(), 2);
+    assert_eq!(client.get_active_events_count(), 2);
+}
+
+/// Tickets sold for a public event are included in the global counter.
+#[test]
+fn test_public_event_tickets_counted_globally() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, ticket_payment) = setup_private_test(&env);
+
+    register_event_with_privacy(&env, &client, &organizer, "pub_evt", false);
+
+    assert_eq!(client.get_global_tickets_sold(), 0);
+    client.increment_inventory(
+        &String::from_str(&env, "pub_evt"),
+        &String::from_str(&env, "tier_1"),
+        &2u32,
+    );
+    assert_eq!(client.get_global_tickets_sold(), 2);
+
+    // Decrement (refund) also updates the counter
+    client.decrement_inventory(
+        &String::from_str(&env, "pub_evt"),
+        &String::from_str(&env, "tier_1"),
+    );
+    assert_eq!(client.get_global_tickets_sold(), 1);
+    let _ = ticket_payment; // suppress unused warning
+}
+
+/// Tickets sold for a private event are NOT included in the global counter.
+#[test]
+fn test_private_event_tickets_excluded_from_global_counter() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, ticket_payment) = setup_private_test(&env);
+
+    register_event_with_privacy(&env, &client, &organizer, "priv_evt", true);
+
+    assert_eq!(client.get_global_tickets_sold(), 0);
+    client.increment_inventory(
+        &String::from_str(&env, "priv_evt"),
+        &String::from_str(&env, "tier_1"),
+        &5u32,
+    );
+    // Global counter must remain 0 for private events
+    assert_eq!(client.get_global_tickets_sold(), 0);
+
+    // Decrement (refund) also must not affect the global counter
+    client.decrement_inventory(
+        &String::from_str(&env, "priv_evt"),
+        &String::from_str(&env, "tier_1"),
+    );
+    assert_eq!(client.get_global_tickets_sold(), 0);
+    let _ = ticket_payment;
+}
+
+/// is_private flag is stored and retrievable via get_event.
+#[test]
+fn test_is_private_flag_stored_on_event() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    register_event_with_privacy(&env, &client, &organizer, "priv_evt", true);
+    register_event_with_privacy(&env, &client, &organizer, "pub_evt", false);
+
+    let priv_event = client
+        .get_event(&String::from_str(&env, "priv_evt"))
+        .unwrap();
+    let pub_event = client
+        .get_event(&String::from_str(&env, "pub_evt"))
+        .unwrap();
+
+    assert!(priv_event.is_private);
+    assert!(!pub_event.is_private);
+}
+
+/// Deactivating a private event does not affect the active events counter.
+#[test]
+fn test_private_event_status_change_does_not_affect_active_count() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let (client, _, organizer, _) = setup_private_test(&env);
+
+    register_event_with_privacy(&env, &client, &organizer, "pub_evt", false);
+    register_event_with_privacy(&env, &client, &organizer, "priv_evt", true);
+
+    assert_eq!(client.get_active_events_count(), 1);
+
+    // Deactivate the private event — counter must stay at 1
+    client.update_event_status(&String::from_str(&env, "priv_evt"), &false);
+    assert_eq!(client.get_active_events_count(), 1);
+
+    // Re-activate the private event — counter must stay at 1
+    client.update_event_status(&String::from_str(&env, "priv_evt"), &true);
+    assert_eq!(client.get_active_events_count(), 1);
+}
+
 // ── Tier-Specific Loyalty Multipliers ────────────────────────────────────────
 
 /// A multiplier of 1 (standard) awards 10 points per ticket — baseline behaviour.
@@ -5267,6 +5555,7 @@ fn setup_event_with_end_time(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        is_private: false,
         end_time,
     });
     (admin, organizer)

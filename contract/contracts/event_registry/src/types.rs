@@ -142,6 +142,10 @@ pub struct EventInfo {
     pub banner_cid: Option<String>,
     /// Optional categorical tags for the event (e.g., "Music", "Tech")
     pub tags: Option<Vec<String>>,
+    /// Whether the event is private and should be excluded from global public counters.
+    /// Private events do not appear in managed event counts, active event counts,
+    /// or global tickets sold totals.
+    pub is_private: bool,
     /// Unix timestamp when the event ends (0 = not set)
     pub end_time: u64,
     /// Optional IPFS CID for post-event feedback (only settable after end_time)
@@ -187,6 +191,8 @@ pub struct EventRegistrationArgs {
     pub banner_cid: Option<String>,
     /// Optional categorical tags for the event (e.g., "Music", "Tech")
     pub tags: Option<Vec<String>>,
+    /// Whether the event is private and should be excluded from global public counters.
+    pub is_private: bool,
     /// Unix timestamp when the event ends (0 = not set)
     pub end_time: u64,
 }
