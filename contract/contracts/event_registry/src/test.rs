@@ -58,6 +58,7 @@ fn test_register_and_get_series() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -77,6 +78,7 @@ fn test_register_and_get_series() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -131,6 +133,7 @@ fn test_issue_and_use_series_pass() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -309,6 +312,7 @@ fn test_storage_operations() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -402,6 +406,7 @@ fn test_get_total_tickets_sold_uses_event_current_supply() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -450,6 +455,7 @@ fn test_get_active_events_count_tracks_status_changes() {
             target_deadline: None,
             banner_cid: None,
             tags: None,
+            start_time: 0,
             is_private: false,
             end_time: 0,
         });
@@ -510,6 +516,7 @@ fn test_organizer_events_list() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -543,6 +550,7 @@ fn test_organizer_events_list() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -603,6 +611,7 @@ fn test_get_organizer_receipts_returns_archived_receipts() {
             custom_fee_bps: None,
             banner_cid: None,
             tags: None,
+            start_time: 0,
             is_private: false,
             end_time: 0,
             feedback_cid: None,
@@ -705,6 +714,7 @@ fn test_register_event_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -760,6 +770,7 @@ fn test_register_event_name_trimming() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -827,6 +838,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now - 1),
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -849,6 +861,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now),
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -871,6 +884,7 @@ fn test_register_event_invalid_target_deadline() {
         target_deadline: Some(now + 100),
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -909,6 +923,7 @@ fn test_register_event_rejects_contract_as_organizer() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -951,6 +966,7 @@ fn test_register_event_rejects_zero_organizer_address() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -995,6 +1011,7 @@ fn test_register_event_unlimited_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1041,6 +1058,7 @@ fn test_register_duplicate_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1061,6 +1079,7 @@ fn test_register_duplicate_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1100,6 +1119,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1128,6 +1148,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1156,6 +1177,7 @@ fn test_register_event_invalid_metadata_cid_formats() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1202,6 +1224,7 @@ fn test_get_event_payment_info() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1248,6 +1271,7 @@ fn test_update_event_status() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1293,6 +1317,7 @@ fn test_event_inactive_error() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1339,6 +1364,7 @@ fn test_complete_event_lifecycle() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1397,6 +1423,7 @@ fn test_update_metadata_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1448,6 +1475,7 @@ fn test_update_metadata_invalid_cid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1546,6 +1574,7 @@ fn test_set_custom_event_fee() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1604,6 +1633,7 @@ fn test_set_custom_event_fee_exceeds_max() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1677,6 +1707,7 @@ fn test_increment_inventory_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1752,6 +1783,7 @@ fn test_increment_inventory_max_supply_exceeded() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1822,6 +1854,7 @@ fn test_increment_inventory_bulk_exceeds_max_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1892,6 +1925,7 @@ fn test_increment_inventory_unlimited_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -1980,6 +2014,7 @@ fn test_increment_inventory_inactive_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2043,6 +2078,7 @@ fn test_increment_inventory_persists_across_reads() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2124,6 +2160,7 @@ fn test_tier_limit_exceeds_max_supply() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2187,6 +2224,7 @@ fn test_tier_not_found() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2251,6 +2289,7 @@ fn test_tier_supply_exceeded() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2332,6 +2371,7 @@ fn test_multiple_tiers_inventory() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2413,6 +2453,7 @@ fn test_increment_inventory_supply_overflow() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -2484,6 +2525,7 @@ fn test_increment_inventory_tier_sold_overflow() {
         custom_fee_bps: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
         feedback_cid: None,
@@ -2532,6 +2574,7 @@ fn test_update_event_status_noop_skips_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2611,6 +2654,7 @@ fn test_blacklist_prevents_event_registration() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2658,6 +2702,7 @@ fn test_update_metadata_noop_skips_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2744,6 +2789,7 @@ fn test_blacklist_suspends_active_events() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2873,6 +2919,7 @@ fn test_register_event_with_resale_cap() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2919,6 +2966,7 @@ fn test_register_event_resale_cap_zero() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -2965,6 +3013,7 @@ fn test_register_event_resale_cap_none() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3011,6 +3060,7 @@ fn test_postpone_event_sets_grace_period() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3064,6 +3114,7 @@ fn test_register_event_resale_cap_invalid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3106,6 +3157,7 @@ fn test_cancel_event_success() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3151,6 +3203,7 @@ fn test_archive_event_rejects_active_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3194,6 +3247,7 @@ fn test_cancel_already_cancelled_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3238,6 +3292,7 @@ fn test_update_status_on_cancelled_event_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3884,6 +3939,7 @@ fn test_register_event_with_banner_cid() {
         target_deadline: None,
         banner_cid: banner_cid.clone(),
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3936,6 +3992,7 @@ fn test_goal_met_event_fires_only_once() {
         target_deadline: None,
         banner_cid: banner_cid.clone(),
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -3996,6 +4053,7 @@ fn test_register_event_without_banner_cid() {
         target_deadline: Some(1000),
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4065,6 +4123,7 @@ fn test_series_pass_issued_at_timestamp() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4144,6 +4203,7 @@ fn base_args(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     }
@@ -4635,6 +4695,7 @@ fn test_cancelled_status_guard() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4771,6 +4832,7 @@ fn test_register_event_restocking_fee_exceeds_tier_price_fails() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4829,6 +4891,7 @@ fn test_register_event_restocking_fee_equal_to_tier_price_succeeds() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4883,6 +4946,7 @@ fn test_register_event_restocking_fee_zero_always_valid() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -4937,6 +5001,7 @@ fn test_register_event_restocking_fee_overflow_returns_invalid_fee_calculation()
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -5023,6 +5088,7 @@ fn test_register_event_tier_limit_overflow() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -5080,6 +5146,7 @@ fn test_register_event_invalid_tier_limit_negative() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -5135,6 +5202,7 @@ fn test_register_event_milestone_overflow() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
@@ -5175,6 +5243,7 @@ fn tags_base_args(env: &Env, event_id: &str, organizer: &Address) -> EventRegist
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     }
@@ -5407,6 +5476,7 @@ fn register_event_with_privacy(
             current_sold: 0,
             is_refundable: false,
             auction_config: soroban_sdk::vec![env],
+            loyalty_multiplier: 1,
         },
     );
     client.register_event(&EventRegistrationArgs {
@@ -5425,6 +5495,7 @@ fn register_event_with_privacy(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private,
         end_time: 0,
     });
@@ -5675,22 +5746,46 @@ fn test_loyalty_multiplier_accumulates_across_purchases() {
 fn test_ticket_tier_loyalty_multiplier_stored_in_event() {
     let env = Env::default();
     env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    let metadata_cid = String::from_str(
+        &env,
+        "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    );
     let (client, _admin, _) = setup_loyalty_env(&env);
 
-    let organizer = Address::generate(&env);
-    let payment_address = Address::generate(&env);
+    let _organizer = Address::generate(&env);
+    let _payment_address = Address::generate(&env);
 
     let mut tiers = Map::new(&env);
     tiers.set(
         String::from_str(&env, "vip"),
         TicketTier {
             name: String::from_str(&env, "VIP"),
-            price: 2_000,
-            tier_limit: 50,
+            price: 1000_0000000i128,
+            tier_limit: 100,
             current_sold: 0,
-            is_refundable: true,
+            is_refundable: false,
             auction_config: soroban_sdk::vec![&env],
             loyalty_multiplier: 2,
+        },
+    );
+    tiers.set(
+        String::from_str(&env, "general"),
+        TicketTier {
+            name: String::from_str(&env, "General"),
+            price: 1000_0000000i128,
+            tier_limit: 100,
+            current_sold: 0,
+            is_refundable: false,
+            auction_config: soroban_sdk::vec![&env],
+            loyalty_multiplier: 1,
         },
     );
 
@@ -5698,12 +5793,9 @@ fn test_ticket_tier_loyalty_multiplier_stored_in_event() {
         event_id: String::from_str(&env, "evt_multiplier"),
         name: String::from_str(&env, "Multiplier Event"),
         organizer_address: organizer.clone(),
-        payment_address,
-        metadata_cid: String::from_str(
-            &env,
-            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
-        ),
-        max_supply: 50,
+        payment_address: test_payment_address(&env),
+        metadata_cid,
+        max_supply: 250,
         milestone_plan: None,
         tiers,
         refund_deadline: 0,
@@ -5713,14 +5805,19 @@ fn test_ticket_tier_loyalty_multiplier_stored_in_event() {
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
+        is_private: false,
         end_time: 0,
     });
 
-    let info = client
+    let event = client
         .get_event(&String::from_str(&env, "evt_multiplier"))
         .unwrap();
-    let vip_tier = info.tiers.get(String::from_str(&env, "vip")).unwrap();
+    let vip_tier = event.tiers.get(String::from_str(&env, "vip")).unwrap();
+    let general_tier = event.tiers.get(String::from_str(&env, "general")).unwrap();
+
     assert_eq!(vip_tier.loyalty_multiplier, 2);
+    assert_eq!(general_tier.loyalty_multiplier, 1);
 }
 
 // ── set_feedback_cid tests ────────────────────────────────────────────────────
@@ -5757,10 +5854,44 @@ fn setup_event_with_end_time(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time,
     });
     (admin, organizer)
+}
+
+fn setup_event_with_end_time_no_init(
+    env: &Env,
+    client: &EventRegistryClient,
+    organizer: &Address,
+    event_id: &str,
+    end_time: u64,
+) {
+    let metadata_cid = String::from_str(
+        env,
+        "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    );
+    client.register_event(&EventRegistrationArgs {
+        event_id: String::from_str(env, event_id),
+        name: String::from_str(env, "Test Event"),
+        organizer_address: organizer.clone(),
+        payment_address: test_payment_address(env),
+        metadata_cid,
+        max_supply: 100,
+        milestone_plan: None,
+        tiers: Map::new(env),
+        refund_deadline: 0,
+        restocking_fee: 0,
+        resale_cap_bps: None,
+        min_sales_target: None,
+        target_deadline: None,
+        banner_cid: None,
+        tags: None,
+        start_time: 0,
+        is_private: false,
+        end_time,
+    });
 }
 
 /// Organizer can set feedback CID after end_time has passed.
@@ -5796,7 +5927,12 @@ fn test_set_feedback_cid_no_end_time_fails() {
     let contract_id = env.register(EventRegistry, ());
     let client = EventRegistryClient::new(&env, &contract_id);
 
-    setup_event_with_end_time(&env, &client, "evt_no_end", 0);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+    setup_event_with_end_time_no_init(&env, &client, &organizer, "evt_no_end", 0);
 
     let feedback_cid = String::from_str(
         &env,
@@ -5815,7 +5951,12 @@ fn test_set_feedback_cid_before_end_time_fails() {
     let client = EventRegistryClient::new(&env, &contract_id);
 
     let future_end_time = env.ledger().timestamp() + 10_000;
-    setup_event_with_end_time(&env, &client, "evt_future", future_end_time);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+    setup_event_with_end_time_no_init(&env, &client, &organizer, "evt_future", future_end_time);
 
     let feedback_cid = String::from_str(
         &env,
@@ -5857,7 +5998,12 @@ fn test_set_feedback_cid_invalid_cid() {
     let client = EventRegistryClient::new(&env, &contract_id);
 
     env.ledger().set_timestamp(1000);
-    setup_event_with_end_time(&env, &client, "evt_bad_cid", 500);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+    setup_event_with_end_time_no_init(&env, &client, &organizer, "evt_bad_cid", 500);
 
     let result = client.try_set_feedback_cid(
         &String::from_str(&env, "evt_bad_cid"),
@@ -5874,8 +6020,73 @@ fn test_set_feedback_cid_cancelled_event_fails() {
     let contract_id = env.register(EventRegistry, ());
     let client = EventRegistryClient::new(&env, &contract_id);
 
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    let mut tiers = Map::new(&env);
+    tiers.set(
+        String::from_str(&env, "vip"),
+        crate::types::TicketTier {
+            name: String::from_str(&env, "VIP"),
+            price: 5000,
+            tier_limit: 50,
+            current_sold: 0,
+            is_refundable: true,
+            auction_config: soroban_sdk::vec![&env],
+            loyalty_multiplier: 2,
+        },
+    );
+    tiers.set(
+        String::from_str(&env, "general"),
+        crate::types::TicketTier {
+            name: String::from_str(&env, "General"),
+            price: 1000,
+            tier_limit: 200,
+            current_sold: 0,
+            is_refundable: false,
+            auction_config: soroban_sdk::vec![&env],
+            loyalty_multiplier: 1,
+        },
+    );
+
+    let metadata_cid = String::from_str(
+        &env,
+        "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    );
+    client.register_event(&EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_multiplier"),
+        name: String::from_str(&env, "Multiplier Event"),
+        organizer_address: organizer.clone(),
+        payment_address: test_payment_address(&env),
+        metadata_cid,
+        max_supply: 250,
+        milestone_plan: None,
+        tiers,
+        refund_deadline: 0,
+        restocking_fee: 0,
+        resale_cap_bps: None,
+        min_sales_target: None,
+        target_deadline: None,
+        banner_cid: None,
+        tags: None,
+        start_time: 0,
+        is_private: false,
+        end_time: 0,
+    });
+
+    let event = client
+        .get_event(&String::from_str(&env, "evt_multiplier"))
+        .unwrap();
+    let vip_tier = event.tiers.get(String::from_str(&env, "vip")).unwrap();
+    let general_tier = event.tiers.get(String::from_str(&env, "general")).unwrap();
+
+    assert_eq!(vip_tier.loyalty_multiplier, 2);
+    assert_eq!(general_tier.loyalty_multiplier, 1);
     env.ledger().set_timestamp(1000);
-    setup_event_with_end_time(&env, &client, "evt_cancelled", 500);
+    setup_event_with_end_time_no_init(&env, &client, &organizer, "evt_cancelled", 500);
 
     let event_id = String::from_str(&env, "evt_cancelled");
     client.cancel_event(&event_id);

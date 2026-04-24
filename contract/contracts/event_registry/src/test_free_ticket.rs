@@ -85,6 +85,7 @@ fn register_free_event(
         target_deadline: None,
         banner_cid: None,
         tags: None,
+        start_time: 0,
         is_private: false,
         end_time: 0,
     });
