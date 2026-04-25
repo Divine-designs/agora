@@ -375,6 +375,18 @@ impl EventRegistry {
             }
         }
 
+        // Validate timestamp consistency: deadlines must be before end_time when end_time is set
+        if args.end_time > 0 {
+            if args.refund_deadline > 0 && args.refund_deadline >= args.end_time {
+                return Err(EventRegistryError::DeadlineAfterEndTime);
+            }
+            if let Some(td) = args.target_deadline {
+                if td >= args.end_time {
+                    return Err(EventRegistryError::DeadlineAfterEndTime);
+                }
+            }
+        }
+
         let platform_fee_percent = storage::get_platform_fee(&env);
 
         // Sanitize: trim leading/trailing whitespace from the event name

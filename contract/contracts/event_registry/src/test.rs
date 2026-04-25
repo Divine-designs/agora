@@ -945,6 +945,128 @@ fn test_register_event_invalid_target_deadline() {
 }
 
 #[test]
+fn test_register_event_refund_deadline_after_end_time_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    env.ledger().with_mut(|li| li.timestamp = 1000);
+
+    let base_args = EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_rd"),
+        name: String::from_str(&env, "Test Event"),
+        organizer_address: organizer.clone(),
+        payment_address: test_payment_address(&env),
+        metadata_cid: String::from_str(
+            &env,
+            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+        ),
+        max_supply: 0,
+        milestone_plan: None,
+        tiers: Map::new(&env),
+        restocking_fee: 0,
+        resale_cap_bps: None,
+        min_sales_target: None,
+        banner_cid: None,
+        tags: None,
+        start_time: 0,
+        is_private: false,
+        transfer_lock_duration: 0,
+        accepted_tokens: soroban_sdk::Vec::new(&env),
+        use_global_whitelist: true,
+        end_time: 5000,
+        refund_deadline: 5000, // equal to end_time — should fail
+        target_deadline: None,
+    };
+
+    // refund_deadline == end_time should fail
+    let result = client.try_register_event(&base_args);
+    assert_eq!(result, Err(Ok(EventRegistryError::DeadlineAfterEndTime)));
+
+    // refund_deadline > end_time should fail
+    let result = client.try_register_event(&EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_rd2"),
+        refund_deadline: 6000,
+        ..base_args.clone()
+    });
+    assert_eq!(result, Err(Ok(EventRegistryError::DeadlineAfterEndTime)));
+
+    // refund_deadline < end_time should succeed
+    client.register_event(&EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_rd3"),
+        refund_deadline: 4999,
+        ..base_args
+    });
+}
+
+#[test]
+fn test_register_event_target_deadline_after_end_time_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(EventRegistry, ());
+    let client = EventRegistryClient::new(&env, &contract_id);
+    let admin = Address::generate(&env);
+    let organizer = Address::generate(&env);
+    let platform_wallet = Address::generate(&env);
+    let usdc_token = Address::generate(&env);
+    client.initialize(&admin, &platform_wallet, &500, &usdc_token);
+
+    env.ledger().with_mut(|li| li.timestamp = 1000);
+
+    let base_args = EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_td"),
+        name: String::from_str(&env, "Test Event"),
+        organizer_address: organizer.clone(),
+        payment_address: test_payment_address(&env),
+        metadata_cid: String::from_str(
+            &env,
+            "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+        ),
+        max_supply: 0,
+        milestone_plan: None,
+        tiers: Map::new(&env),
+        restocking_fee: 0,
+        resale_cap_bps: None,
+        min_sales_target: None,
+        banner_cid: None,
+        tags: None,
+        start_time: 0,
+        is_private: false,
+        transfer_lock_duration: 0,
+        accepted_tokens: soroban_sdk::Vec::new(&env),
+        use_global_whitelist: true,
+        end_time: 5000,
+        refund_deadline: 0,
+        target_deadline: Some(5000), // equal to end_time — should fail
+    };
+
+    // target_deadline == end_time should fail
+    let result = client.try_register_event(&base_args);
+    assert_eq!(result, Err(Ok(EventRegistryError::DeadlineAfterEndTime)));
+
+    // target_deadline > end_time should fail
+    let result = client.try_register_event(&EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_td2"),
+        target_deadline: Some(6000),
+        ..base_args.clone()
+    });
+    assert_eq!(result, Err(Ok(EventRegistryError::DeadlineAfterEndTime)));
+
+    // target_deadline < end_time should succeed
+    client.register_event(&EventRegistrationArgs {
+        event_id: String::from_str(&env, "evt_td3"),
+        target_deadline: Some(4999),
+        ..base_args
+    });
+}
+
+#[test]
 fn test_register_event_rejects_contract_as_organizer() {
     let env = Env::default();
     let contract_id = env.register(EventRegistry, ());
