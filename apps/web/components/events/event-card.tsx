@@ -7,7 +7,7 @@ import Link from "next/link";
  */
 type EventCardProps = {
   /** Unique identifier for the event */
-  id: number;
+  id: string | number;
   /** Title/name of the event */
   title: string;
   /** Formatted date string of the event */
