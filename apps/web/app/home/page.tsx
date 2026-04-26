@@ -588,7 +588,7 @@ function MyEventsContent({ activeTab }: { activeTab: MyEventsTab }) {
 
   return (
     <div className="pt-4 space-y-13.25">
-      {events.map((event, index) => (
+      {events.map((event) => (
         <TimelineEventCard key={event.id} event={event} />
       ))}
     </div>
