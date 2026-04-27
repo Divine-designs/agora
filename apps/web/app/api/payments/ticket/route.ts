@@ -37,13 +37,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  if (!hasAvailableTickets(event, quantity)) {
+  const qty = quantity as number;
+
+  if (!hasAvailableTickets(event, qty)) {
     return NextResponse.json({ error: "Not enough tickets available" }, { status: 409 });
   }
 
   try {
-    const mintResult = await mintTicket(eventId, buyerWallet, quantity);
-    incrementMintedTickets(eventId, quantity);
+    const mintResult = await mintTicket(eventId, buyerWallet, qty);
+    incrementMintedTickets(eventId, qty);
 
     return NextResponse.json(
       {

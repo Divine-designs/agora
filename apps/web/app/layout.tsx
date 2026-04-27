@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,6 +46,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <LoadingBar />
         </Suspense>
+        <Toaster position="top-right" richColors />
         {children}
       </body>
     </html>
