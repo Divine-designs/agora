@@ -27,7 +27,8 @@ export const GET = withErrorHandler(async () => {
     }));
 
   const organizers = Array.from(
-    events.reduce((acc, event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    events.reduce((acc: any, event: any) => {
       if (!acc.has(event.organizerName)) {
         acc.set(event.organizerName, {
           id: event.organizerName.toLowerCase().replace(/\s+/g, "-"),
