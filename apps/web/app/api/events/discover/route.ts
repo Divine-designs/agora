@@ -7,7 +7,7 @@ export const GET = withErrorHandler(async () => {
 
   const categories = Array.from(
     new Set(events.map((event: { category: string }) => event.category)),
-  ).map((name) => ({
+  ).map((name: string) => ({
     name,
     icon: `/icons/${name.toLowerCase()}.svg`,
     color: "#DBF4B9",
