@@ -217,7 +217,8 @@ export default function RecommendedEvents({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-          : events.map((event: (typeof dataEvents)[0]) => <EventCard key={event.id} event={event} />)}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          : events.map((event: any) => <EventCard key={event.id} event={event as any} />)}
       </div>
     </section>
   );
