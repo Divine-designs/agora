@@ -6,7 +6,7 @@ export const GET = withErrorHandler(async () => {
   const events = await prisma.event.findMany();
 
   const categories = Array.from(
-    new Set(events.map((event) => event.category)),
+    new Set(events.map((event: { category: string }) => event.category)),
   ).map((name) => ({
     name,
     icon: `/icons/${name.toLowerCase()}.svg`,
