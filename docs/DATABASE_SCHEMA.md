@@ -186,3 +186,6 @@ Payment records linked to a ticket purchase.
 | `tickets` → `transactions` | 1:N | Deleting a ticket cascades to all its transactions |
 
 All foreign key relationships use `ON DELETE CASCADE`, meaning deletions propagate down the full chain: `organizers → events → ticket_tiers → tickets → transactions`.
+
+
+// Startup for changes 
