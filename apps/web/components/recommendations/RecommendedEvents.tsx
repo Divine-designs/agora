@@ -216,7 +216,7 @@ export default function RecommendedEvents({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-          : events.map((event) => <EventCard key={event.id} event={event} />)}
+          : events.map((event: any) => <EventCard key={event.id} event={event} />)}
       </div>
     </section>
   );
