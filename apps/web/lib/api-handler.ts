@@ -3,10 +3,12 @@ import { ApiError } from "./api-errors";
 
 type RouteHandler = (
   request: NextRequest,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   context: any,
 ) => Promise<NextResponse> | NextResponse;
 
 export function withErrorHandler(handler: RouteHandler) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (request: NextRequest, context: any) => {
     try {
       return await handler(request, context);
