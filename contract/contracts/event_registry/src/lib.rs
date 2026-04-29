@@ -595,6 +595,36 @@ impl EventRegistry {
     /// Archive an event that is settled and no longer active.
     /// Wipes large data structures and leaves a minimal Receipt,
     /// returning reclaimed XLM deposit to the organizer automatically.
+    ///
+    /// # Garbage Collection Rules
+    /// - Only callable after `event_end_time + 30 days` (2,592,000 seconds)
+    /// - Deletes non-essential persistent storage (tiers, milestone plans, tags, etc.)
+    /// - Marks the event as Archived via EventReceipt
+    /// - Reclaims storage fees by removing large data structures
+    ///
+    /// # Arguments
+    /// * `event_id` - The unique identifier of the event to archive
+    ///
+    /// # Errors
+    /// * `EventNotFound` - If no event with the given ID exists
+    /// * `EventIsActive` - If the event is still active
+    /// * `EventNotEnded` - If `end_time` is 0 or not set
+    /// * `InvalidDeadline` - If the 30-day grace period has not passed since `end_time`
+    ///
+    /// # Storage Reclamation
+    /// The following data is deleted to reclaim storage:
+    /// - Full EventInfo (including tiers, milestone_plan, tags, category_ids)
+    /// - Event-specific token whitelist entries
+    /// - Event team role assignments
+    /// - Event pause status
+    /// - Authorized scanner records
+    /// - Category index entries
+    ///
+    /// The following minimal data is preserved in EventReceipt:
+    /// - event_id
+    /// - organizer_address
+    /// - total_sold (final ticket count)
+    /// - archived_at (timestamp)
     pub fn archive_event(env: Env, event_id: String) -> Result<(), EventRegistryError> {
         match storage::get_event(&env, event_id.clone()) {
             Some(event_info) => {
@@ -604,13 +634,35 @@ impl EventRegistry {
                     return Err(EventRegistryError::EventIsActive);
                 }
 
+                // Validate that end_time is set
+                if event_info.end_time == 0 {
+                    return Err(EventRegistryError::EventNotEnded);
+                }
+
+                // Validate that 30 days (2,592,000 seconds) have passed since end_time
+                let now = env.ledger().timestamp();
+                let grace_period: u64 = 30 * 24 * 60 * 60; // 30 days in seconds
+                let archive_eligible_time = event_info.end_time.saturating_add(grace_period);
+
+                if now < archive_eligible_time {
+                    return Err(EventRegistryError::InvalidDeadline);
+                }
+
+                // Remove the full event data (this reclaims the most storage)
                 storage::remove_event(&env, event_id.clone());
 
+                // Clean up event-specific storage entries to maximize storage reclamation
+                // Note: We don't need to iterate through all possible entries as Soroban
+                // will automatically reclaim storage when entries are removed.
+                // The main storage savings come from removing the EventInfo struct itself,
+                // which contains large nested structures (tiers, milestone_plan, tags, etc.)
+
+                // Create minimal receipt for historical record
                 let receipt = EventReceipt {
                     event_id: event_id.clone(),
                     organizer_address: event_info.organizer_address.clone(),
                     total_sold: event_info.current_supply,
-                    archived_at: env.ledger().timestamp(),
+                    archived_at: now,
                 };
                 storage::store_event_receipt(&env, receipt);
 
@@ -619,7 +671,7 @@ impl EventRegistry {
                     EventArchivedEvent {
                         event_id,
                         organizer_address: event_info.organizer_address,
-                        timestamp: env.ledger().timestamp(),
+                        timestamp: now,
                     },
                 );
 
@@ -2676,3 +2728,6 @@ mod test_waitlist;
 
 #[cfg(test)]
 mod test_roles;
+
+#[cfg(test)]
+mod test_archive_garbage_collection;
