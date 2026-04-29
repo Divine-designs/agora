@@ -101,6 +101,8 @@ pub struct Payment {
     pub refunded_amount: i128,
     pub is_soulbound: bool,
     pub last_checked_in_at: u64,
+    pub referral_amount: i128,
+    pub referrer: Option<Address>,
 }
 
 #[contracttype]
@@ -172,4 +174,6 @@ pub enum DataKey {
     EventPaymentStatusEntry(String, PaymentStatus, String),
     /// SHA-256 hash of the ticket secret: payment_id -> BytesN<32>
     ValidationHash(String),
+    /// Per-event affiliate commission rate: (event_id, affiliate_addr) -> rate_bps (u32)
+    AffiliateRate(String, Address),
 }

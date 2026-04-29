@@ -93,11 +93,12 @@ use crate::events::{
     InventoryIncrementedEvent, LoyaltyScoreUpdatedEvent, MetadataUpdatedEvent,
     OrganizerBlacklistedEvent, OrganizerRemovedFromBlacklistEvent, ProposalCancelledEvent,
     RegistryUpgradedEvent, ScannerAuthorizedEvent, StakerRewardsClaimedEvent,
-    StakerRewardsDistributedEvent, TokenWhitelistUpdatedEvent,
+    StakerRewardsDistributedEvent, TokenWhitelistUpdatedEvent, WaitlistJoinedEvent,
 };
 use crate::types::{
-    BlacklistAuditEntry, DataKey, EventInfo, EventReceipt, EventRegistrationArgs, EventStatus,
-    GuestProfile, MultiSigConfig, OrganizerStake, PaymentInfo, SeriesPass, SeriesRegistry,
+    BlacklistAuditEntry, Category, DataKey, EventInfo, EventReceipt, EventRegistrationArgs,
+    EventStatus, GuestProfile, MultiSigConfig, OrganizerStake, PaymentInfo, SeriesPass,
+    SeriesRegistry,
 };
 use soroban_sdk::{contract, contractimpl, token, Address, BytesN, Env, String, Vec};
 
@@ -396,6 +397,18 @@ impl EventRegistry {
             }
         }
 
+        // Validate category IDs: max 5, each must map to a known Category
+        if let Some(ref ids) = args.category_ids {
+            if ids.len() > 5 {
+                return Err(EventRegistryError::InvalidCategoryId);
+            }
+            for id in ids.iter() {
+                if Category::from_id(id).is_none() {
+                    return Err(EventRegistryError::InvalidCategoryId);
+                }
+            }
+        }
+
         if let Some(deadline) = args.target_deadline {
             if deadline <= env.ledger().timestamp() {
                 return Err(EventRegistryError::InvalidTargetDeadline);
@@ -444,6 +457,7 @@ impl EventRegistry {
             custom_fee_bps: None,
             banner_cid: args.banner_cid,
             tags: args.tags,
+            category_ids: args.category_ids.clone(),
             start_time: args.start_time,
             is_private: args.is_private,
             end_time: args.end_time,
@@ -452,9 +466,17 @@ impl EventRegistry {
             use_global_whitelist: args.use_global_whitelist,
             feedback_cid: None,
             cancellation_reason: None,
+            referral_rate_bps: args.referral_rate_bps.unwrap_or(0),
         };
 
         storage::store_event(&env, event_info);
+
+        // Index the event under each category ID for fast filtering
+        if let Some(ref ids) = args.category_ids {
+            for id in ids.iter() {
+                storage::index_event_category(&env, id, args.event_id.clone());
+            }
+        }
 
         env.events().publish(
             (AgoraEvent::EventRegistered,),
@@ -484,6 +506,7 @@ impl EventRegistry {
                     platform_fee_percent: event_info.platform_fee_percent,
                     custom_fee_bps: event_info.custom_fee_bps,
                     tiers: event_info.tiers,
+                    referral_rate_bps: event_info.referral_rate_bps,
                 })
             }
             None => Err(EventRegistryError::EventNotFound),
@@ -747,6 +770,12 @@ impl EventRegistry {
     /// Retrieves all event IDs for an organizer.
     pub fn get_organizer_events(env: Env, organizer: Address) -> Vec<String> {
         storage::get_organizer_events(&env, &organizer)
+    }
+
+    /// Returns all event IDs tagged with the given category ID.
+    /// Returns an empty list for unknown or unused category IDs.
+    pub fn get_events_by_category(env: Env, category_id: u32) -> Vec<String> {
+        storage::get_events_by_category(&env, category_id)
     }
 
     /// Retrieves all archived event receipts for an organizer.
@@ -1325,7 +1354,6 @@ impl EventRegistry {
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
     /// * `Unauthorized` - If the caller is not the event organizer
-    /// * `NoStateChange` - If the event is already paused
     pub fn pause_event(env: Env, event_id: String) -> Result<(), EventRegistryError> {
         let event_info =
             storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
@@ -1333,7 +1361,7 @@ impl EventRegistry {
         // Verify organizer authorization
         event_info.organizer_address.require_auth();
 
-        // Check if already paused
+        // Check if already paused - if so, this is a no-op (idempotent)
         if storage::is_event_paused(&env, &event_id) {
             return Err(EventRegistryError::StateError);
         }
@@ -1365,7 +1393,6 @@ impl EventRegistry {
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
     /// * `Unauthorized` - If the caller is not the event organizer
-    /// * `NoStateChange` - If the event is not currently paused
     pub fn resume_event(env: Env, event_id: String) -> Result<(), EventRegistryError> {
         let event_info =
             storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
@@ -1373,7 +1400,7 @@ impl EventRegistry {
         // Verify organizer authorization
         event_info.organizer_address.require_auth();
 
-        // Check if not paused
+        // Check if not paused - if so, this is a no-op (idempotent)
         if !storage::is_event_paused(&env, &event_id) {
             return Err(EventRegistryError::StateError);
         }
@@ -2286,6 +2313,50 @@ impl EventRegistry {
     pub fn version(_env: Env) -> u32 {
         VERSION
     }
+
+    /// Allows a user to join the waitlist for an event.
+    ///
+    /// # Arguments
+    /// * `event_id` - The unique identifier of the event
+    /// * `user` - The address of the user joining the waitlist (must sign)
+    ///
+    /// # Returns
+    /// * `Ok(())` - User successfully joined the waitlist
+    ///
+    /// # Errors
+    /// * `EventNotFound` - If no event with the given ID exists
+    /// * `AlreadyOnWaitlist` - If the user is already on the waitlist for this event
+    ///
+    /// # Authentication
+    /// Requires `user.require_auth()`
+    pub fn join_waitlist(
+        env: Env,
+        event_id: String,
+        user: Address,
+    ) -> Result<(), EventRegistryError> {
+        user.require_auth();
+
+        if !storage::event_exists(&env, event_id.clone()) {
+            return Err(EventRegistryError::EventNotFound);
+        }
+
+        if storage::is_on_waitlist(&env, &event_id, &user) {
+            return Err(EventRegistryError::AlreadyOnWaitlist);
+        }
+
+        storage::add_to_waitlist(&env, &event_id, &user);
+
+        env.events().publish(
+            (AgoraEvent::WaitlistJoined,),
+            WaitlistJoinedEvent {
+                event_id,
+                user,
+                timestamp: env.ledger().timestamp(),
+            },
+        );
+
+        Ok(())
+    }
 }
 
 fn require_admin(env: &Env) -> Result<Address, EventRegistryError> {
@@ -2386,7 +2457,7 @@ fn validate_restocking_fee(args: &EventRegistrationArgs) -> Result<(), EventRegi
             .ok_or(EventRegistryError::InvalidAddress)?;
 
         if remaining_refund < 0 {
-            return Err(EventRegistryError::InvalidAddress);
+            return Err(EventRegistryError::RestockingFeeExceedsPrice);
         }
     }
 
@@ -2444,3 +2515,6 @@ mod test_free_ticket;
 
 #[cfg(test)]
 mod test_proposal_cancellation;
+
+#[cfg(test)]
+mod test_waitlist;

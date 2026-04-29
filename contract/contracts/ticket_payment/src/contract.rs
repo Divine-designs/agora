@@ -39,6 +39,7 @@ use soroban_sdk::{
 };
 
 const MAX_ORACLE_PRICE_AGE_SECS: u64 = 3600;
+const ESCROW_DELAY: u64 = 86400;
 
 /// Minimum claimable amount in stroops (0.01 USDC).
 /// Balances at or below this threshold are swept in full to avoid dust.
@@ -79,6 +80,7 @@ pub mod event_registry {
         pub payment_address: Address,
         pub platform_fee_percent: u32,
         pub custom_fee_bps: Option<u32>,
+        pub referral_rate_bps: u32,
     }
 
     #[soroban_sdk::contracttype]
@@ -180,6 +182,7 @@ pub mod event_registry {
         pub end_time: u64,
         pub accepted_tokens: soroban_sdk::Vec<Address>,
         pub use_global_whitelist: bool,
+        pub referral_rate_bps: u32,
     }
 }
 
@@ -205,7 +208,11 @@ fn get_ticket_payment_id(_env: &Env, _ticket_id: u64) -> Option<String> {
     None
 }
 
-fn get_scheduled_price(schedules: &soroban_sdk::Vec<crate::types::PriceSchedule>, current_time: u64, final_price: i128) -> i128 {
+fn get_scheduled_price(
+    schedules: &soroban_sdk::Vec<crate::types::PriceSchedule>,
+    current_time: u64,
+    final_price: i128,
+) -> i128 {
     for s in schedules.iter() {
         if s.valid_until > current_time {
             return s.price;
@@ -739,7 +746,8 @@ impl TicketPaymentContract {
             }
         } else {
             // ── Exact token-price matching (existing behaviour) ───────────
-            let schedules: soroban_sdk::Vec<crate::types::PriceSchedule> = soroban_sdk::Vec::new(&env);
+            let schedules: soroban_sdk::Vec<crate::types::PriceSchedule> =
+                soroban_sdk::Vec::new(&env);
             let mut active_price = get_scheduled_price(&schedules, current_time, tier.price);
 
             if tier.early_bird_deadline > 0 && current_time <= tier.early_bird_deadline {
@@ -811,20 +819,30 @@ impl TicketPaymentContract {
             .checked_sub(total_platform_fee)
             .ok_or(TicketPaymentError::ArithmeticError)?;
 
-        let referral_reward = if options.referrer.is_some() {
+        let referral_reward = if let Some(ref ref_addr) = options.referrer {
+            // Use affiliate-specific rate if registered; otherwise fall back to 20% of platform fee.
+            let rate_bps =
+                crate::storage::get_affiliate_rate(&env, &event_id, ref_addr).unwrap_or(2000u32); // default: 20% = 2000 bps
             let reward = total_platform_fee
-                .checked_mul(20)
-                .and_then(|v| v.checked_div(100))
-                .ok_or(TicketPaymentError::ArithmeticError)?; // 20%
-                                                              // Cap: referral reward must never exceed the remaining platform fee.
+                .checked_mul(rate_bps as i128)
+                .and_then(|v| v.checked_div(MAX_BPS as i128))
+                .ok_or(TicketPaymentError::ArithmeticError)?;
+            // Cap: referral reward must never exceed the remaining platform fee.
             let reward = core::cmp::min(reward, total_platform_fee);
             total_platform_fee = total_platform_fee
                 .checked_sub(reward)
                 .ok_or(TicketPaymentError::ArithmeticError)?;
+
+            // Cap: referral reward must never exceed the remaining organizer amount
+            let reward = core::cmp::min(reward, total_organizer_amount);
             reward
         } else {
             0
         };
+
+        let total_organizer_amount = total_organizer_amount
+            .checked_sub(referral_reward)
+            .ok_or(TicketPaymentError::ArithmeticError)?;
 
         // 3. Transfer tokens to contract (escrow)
         let token_client = token::Client::new(&env, &token_address);
@@ -892,6 +910,9 @@ impl TicketPaymentContract {
         let organizer_amount_per_ticket = total_organizer_amount
             .checked_div(quantity_i128)
             .ok_or(TicketPaymentError::ArithmeticError)?;
+        let referral_amount_per_ticket = referral_reward
+            .checked_div(quantity_i128)
+            .ok_or(TicketPaymentError::ArithmeticError)?;
         let created_at = env.ledger().timestamp();
         let empty_tx_hash = String::from_str(&env, "");
 
@@ -927,6 +948,8 @@ impl TicketPaymentContract {
                 refunded_amount: 0,
                 is_soulbound: false,
                 last_checked_in_at: 0,
+                referral_amount: referral_amount_per_ticket,
+                referrer: referrer.clone(),
             };
 
             store_payment(&env, payment);
@@ -1465,6 +1488,11 @@ impl TicketPaymentContract {
 
         event_info.organizer_address.require_auth();
 
+        if event_info.end_time > 0 && env.ledger().timestamp() < event_info.end_time + ESCROW_DELAY
+        {
+            return Err(TicketPaymentError::EventNotCompleted);
+        }
+
         let balance = get_event_balance(&env, event_id.clone());
         // Block all claim_revenue attempts for an event while a dispute is active.
         if is_event_disputed(&env, event_id.clone()) {
@@ -1821,6 +1849,37 @@ impl TicketPaymentContract {
 
         // Store the basis points, not the calculated amount
         set_transfer_fee(&env, event_id, bps);
+        Ok(())
+    }
+
+    /// Sets a per-event affiliate commission rate in basis points.
+    /// Only the event organizer can call this.
+    /// `rate_bps` must be in [1, 10000]. Set to 0 to remove (revert to default).
+    pub fn set_affiliate_rate(
+        env: Env,
+        event_id: String,
+        affiliate: Address,
+        rate_bps: u32,
+    ) -> Result<(), TicketPaymentError> {
+        if !is_initialized(&env) {
+            panic!("Contract not initialized");
+        }
+
+        if rate_bps > MAX_BPS {
+            return Err(TicketPaymentError::InvalidFeePercent);
+        }
+
+        let event_registry_addr = get_event_registry(&env);
+        let registry_client = event_registry::Client::new(&env, &event_registry_addr);
+
+        let event_info = match registry_client.try_get_event(&event_id) {
+            Ok(Ok(Some(info))) => info,
+            _ => return Err(TicketPaymentError::EventNotFound),
+        };
+
+        event_info.organizer_address.require_auth();
+
+        crate::storage::set_affiliate_rate(&env, event_id, &affiliate, rate_bps);
         Ok(())
     }
 
