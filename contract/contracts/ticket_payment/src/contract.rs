@@ -587,6 +587,8 @@ impl TicketPaymentContract {
     }
 
     /// Processes a payment for an event ticket.
+    /// The buyer pays for the ticket, but the ticket is owned by the recipient.
+    /// If recipient is None, the buyer is also the owner.
     #[allow(clippy::too_many_arguments)]
     pub fn process_payment(
         env: Env,
@@ -594,6 +596,7 @@ impl TicketPaymentContract {
         event_id: String,
         ticket_tier_id: String,
         buyer_address: Address,
+        recipient_address: Option<Address>, // Optional recipient; defaults to buyer if None
         token_address: Address,
         amount: i128, // price for ONE ticket
         quantity: u32,
@@ -607,6 +610,9 @@ impl TicketPaymentContract {
             return Err(TicketPaymentError::ContractPaused);
         }
         buyer_address.require_auth();
+
+        // Determine the actual owner of the ticket (recipient or buyer)
+        let owner_address = recipient_address.unwrap_or_else(|| buyer_address.clone());
 
         if let Some(ref ref_addr) = options.referrer {
             if ref_addr == &buyer_address {
@@ -900,7 +906,8 @@ impl TicketPaymentContract {
         }
 
         // 6. Increment inventory after successful payment
-        registry_client.increment_inventory(&event_id, &ticket_tier_id, &buyer_address, &quantity);
+        // Use owner_address (recipient) for inventory tracking, not buyer_address
+        registry_client.increment_inventory(&event_id, &ticket_tier_id, &owner_address, &quantity);
 
         // 7. Create payment records for each individual ticket
         let quantity_i128 = quantity as i128;
@@ -936,6 +943,7 @@ impl TicketPaymentContract {
                 payment_id: sub_payment_id.clone(),
                 event_id: event_id.clone(),
                 buyer_address: buyer_address.clone(),
+                owner_address: owner_address.clone(), // Ticket owner (recipient)
                 ticket_tier_id: ticket_tier_id.clone(),
                 token_address: token_address.clone(),
                 amount,
@@ -949,7 +957,7 @@ impl TicketPaymentContract {
                 is_soulbound: false,
                 last_checked_in_at: 0,
                 referral_amount: referral_amount_per_ticket,
-                referrer: referrer.clone(),
+                referrer: options.referrer.clone(),
             };
 
             store_payment(&env, payment);

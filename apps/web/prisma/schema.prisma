@@ -36,7 +36,8 @@ model Ticket {
   stellarId   String?  @unique
   eventId     String
   event       Event    @relation(fields: [eventId], references: [id])
-  buyerWallet String
+  buyerWallet String   // The person who paid for the ticket
+  ownerWallet String   // The person who owns/receives the ticket (can be different from buyer)
   quantity    Int      @default(1)
   createdAt   DateTime @default(now())
 }

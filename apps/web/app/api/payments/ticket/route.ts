@@ -8,6 +8,7 @@ type TicketRequestBody = {
   eventId?: string;
   quantity?: number;
   buyerWallet?: string;
+  recipientWallet?: string; // Optional: if provided, ticket goes to recipient instead of buyer
 };
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -18,7 +19,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throwApiError("Invalid JSON payload", 400);
   }
 
-  const { eventId, quantity, buyerWallet } = payload;
+  const { eventId, quantity, buyerWallet, recipientWallet } = payload;
 
   // Validation
   if (!eventId || typeof eventId !== "string") {
@@ -36,6 +37,14 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   if (!buyerWallet || typeof buyerWallet !== "string") {
     throwApiError("Invalid buyerWallet", 400);
   }
+  
+  // Validate recipientWallet if provided
+  if (recipientWallet !== undefined && recipientWallet !== null && typeof recipientWallet !== "string") {
+    throwApiError("Invalid recipientWallet", 400);
+  }
+
+  // Determine the actual owner of the ticket
+  const ownerWallet = recipientWallet || buyerWallet;
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
@@ -51,7 +60,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   }
 
   try {
-    const mintResult = await mintTicket(eventId, buyerWallet, qty);
+    const mintResult = await mintTicket(eventId, ownerWallet, qty);
 
     // Atomically update event count and create ticket record
     await prisma.$transaction([
@@ -64,6 +73,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
           stellarId: mintResult.ticketId,
           eventId,
           buyerWallet,
+          ownerWallet,
           quantity: qty,
         },
       }),

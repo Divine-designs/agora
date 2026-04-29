@@ -89,6 +89,7 @@ pub struct Payment {
     pub payment_id: String,
     pub event_id: String,
     pub buyer_address: Address,
+    pub owner_address: Address, // The recipient who owns the ticket (can be different from buyer)
     pub ticket_tier_id: String,
     pub token_address: Address,
     pub amount: i128, // Payment token amount in stroops
