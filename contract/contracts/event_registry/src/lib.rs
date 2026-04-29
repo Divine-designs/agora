@@ -1342,24 +1342,32 @@ impl EventRegistry {
 
     // ── Event Pause Management ─────────────────────────────────────────────────
 
-    /// Pauses an event, preventing new ticket sales. Only callable by the organizer.
+    /// Pauses an event, preventing new ticket sales. Only callable by the organizer, ADMIN, or MANAGER.
     ///
-    /// Organizers can temporarily halt ticket sales due to venue issues or capacity reassessment.
+    /// Organizers and managers can temporarily halt ticket sales due to venue issues or capacity reassessment.
     /// While paused, the TicketPayment contract will reject new purchase requests.
     /// All other event data remains intact and unchanged.
     ///
     /// # Arguments
+    /// * `caller` - The address calling this function (must be organizer, ADMIN, or MANAGER)
     /// * `event_id` - The event ID to pause
     ///
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
-    /// * `Unauthorized` - If the caller is not the event organizer
-    pub fn pause_event(env: Env, event_id: String) -> Result<(), EventRegistryError> {
+    /// * `Unauthorized` - If the caller does not have MANAGER or ADMIN role
+    pub fn pause_event(env: Env, caller: Address, event_id: String) -> Result<(), EventRegistryError> {
+        caller.require_auth();
+
         let event_info =
             storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
 
-        // Verify organizer authorization
-        event_info.organizer_address.require_auth();
+        // Check if caller is organizer or has MANAGER/ADMIN role
+        let is_organizer = caller == event_info.organizer_address;
+        let has_permission = storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
+
+        if !is_organizer && !has_permission {
+            return Err(EventRegistryError::Unauthorized);
+        }
 
         // Check if already paused - if so, this is a no-op (idempotent)
         if storage::is_event_paused(&env, &event_id) {
@@ -1374,7 +1382,7 @@ impl EventRegistry {
             EventStatusUpdatedEvent {
                 event_id,
                 is_active: event_info.is_active,
-                updated_by: event_info.organizer_address,
+                updated_by: caller,
                 timestamp: env.ledger().timestamp(),
             },
         );
@@ -1382,23 +1390,31 @@ impl EventRegistry {
         Ok(())
     }
 
-    /// Resumes a paused event, allowing ticket sales to resume. Only callable by the organizer.
+    /// Resumes a paused event, allowing ticket sales to resume. Only callable by the organizer, ADMIN, or MANAGER.
     ///
     /// Reactivates ticket sales for a previously paused event.
     /// The event must be currently paused to call this function.
     ///
     /// # Arguments
+    /// * `caller` - The address calling this function (must be organizer, ADMIN, or MANAGER)
     /// * `event_id` - The event ID to resume
     ///
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
-    /// * `Unauthorized` - If the caller is not the event organizer
-    pub fn resume_event(env: Env, event_id: String) -> Result<(), EventRegistryError> {
+    /// * `Unauthorized` - If the caller does not have MANAGER or ADMIN role
+    pub fn resume_event(env: Env, caller: Address, event_id: String) -> Result<(), EventRegistryError> {
+        caller.require_auth();
+
         let event_info =
             storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
 
-        // Verify organizer authorization
-        event_info.organizer_address.require_auth();
+        // Check if caller is organizer or has MANAGER/ADMIN role
+        let is_organizer = caller == event_info.organizer_address;
+        let has_permission = storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
+
+        if !is_organizer && !has_permission {
+            return Err(EventRegistryError::Unauthorized);
+        }
 
         // Check if not paused - if so, this is a no-op (idempotent)
         if !storage::is_event_paused(&env, &event_id) {
@@ -1413,7 +1429,7 @@ impl EventRegistry {
             EventStatusUpdatedEvent {
                 event_id,
                 is_active: event_info.is_active,
-                updated_by: event_info.organizer_address,
+                updated_by: caller,
                 timestamp: env.ledger().timestamp(),
             },
         );
@@ -2357,6 +2373,145 @@ impl EventRegistry {
 
         Ok(())
     }
+
+    // ── Event Team Role Management ─────────────────────────────────────────────
+
+    /// Assigns a role to a team member for a specific event.
+    /// Only callable by the event organizer or an existing ADMIN role holder.
+    ///
+    /// # Arguments
+    /// * `event_id` - The event to assign the role for
+    /// * `member` - The address of the team member to assign the role to
+    /// * `role` - The role to assign (Admin, Manager, or Scanner)
+    ///
+    /// # Errors
+    /// * `EventNotFound` - If no event with the given ID exists
+    /// * `Unauthorized` - If the caller is not the organizer or an admin
+    /// * `Unauthorized` - If attempting to assign a role to the organizer
+    ///
+    /// # Role Hierarchy
+    /// - **ADMIN**: Full control (can manage roles, edit all settings, cancel event)
+    /// - **MANAGER**: Can edit tiers and pause/resume event
+    /// - **SCANNER**: Can only check in attendees
+    pub fn assign_event_role(
+        env: Env,
+        caller: Address,
+        event_id: String,
+        member: Address,
+        role: types::Role,
+    ) -> Result<(), EventRegistryError> {
+        caller.require_auth();
+
+        let event_info =
+            storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
+
+        // Only the organizer or an existing ADMIN can assign roles
+        let is_organizer = caller == event_info.organizer_address;
+        let is_admin = storage::has_event_role(&env, &event_id, &caller, types::Role::Admin);
+
+        if !is_organizer && !is_admin {
+            return Err(EventRegistryError::Unauthorized);
+        }
+
+        // Cannot assign a role to the organizer (they have implicit admin rights)
+        if member == event_info.organizer_address {
+            return Err(EventRegistryError::Unauthorized);
+        }
+
+        storage::set_event_team_role(&env, &event_id, &member, role);
+
+        Ok(())
+    }
+
+    /// Removes a team member's role from an event.
+    /// Only callable by the event organizer or an existing ADMIN role holder.
+    ///
+    /// # Arguments
+    /// * `event_id` - The event to remove the role from
+    /// * `member` - The address of the team member to remove
+    ///
+    /// # Errors
+    /// * `EventNotFound` - If no event with the given ID exists
+    /// * `Unauthorized` - If the caller is not the organizer or an admin
+    /// * `Unauthorized` - If attempting to remove the organizer
+    pub fn remove_event_role(
+        env: Env,
+        caller: Address,
+        event_id: String,
+        member: Address,
+    ) -> Result<(), EventRegistryError> {
+        caller.require_auth();
+
+        let event_info =
+            storage::get_event(&env, event_id.clone()).ok_or(EventRegistryError::EventNotFound)?;
+
+        // Only the organizer or an existing ADMIN can remove roles
+        let is_organizer = caller == event_info.organizer_address;
+        let is_admin = storage::has_event_role(&env, &event_id, &caller, types::Role::Admin);
+
+        if !is_organizer && !is_admin {
+            return Err(EventRegistryError::Unauthorized);
+        }
+
+        // Cannot remove the organizer
+        if member == event_info.organizer_address {
+            return Err(EventRegistryError::Unauthorized);
+        }
+
+        storage::remove_event_team_role(&env, &event_id, &member);
+
+        Ok(())
+    }
+
+    /// Gets the role of a team member for a specific event.
+    /// Returns None if the member has no role assigned.
+    /// Note: The organizer always has implicit ADMIN rights even if not explicitly assigned.
+    ///
+    /// # Arguments
+    /// * `event_id` - The event to check
+    /// * `member` - The address of the team member
+    ///
+    /// # Returns
+    /// * `Some(Role)` - The role assigned to the member
+    /// * `None` - If the member has no role assigned
+    pub fn get_event_role(env: Env, event_id: String, member: Address) -> Option<types::Role> {
+        // Check if member is the organizer (implicit admin)
+        if let Some(event_info) = storage::get_event(&env, event_id.clone()) {
+            if member == event_info.organizer_address {
+                return Some(types::Role::Admin);
+            }
+        }
+
+        storage::get_event_team_role(&env, &event_id, &member)
+    }
+
+    /// Checks if a member has at least the specified role for an event.
+    /// Takes into account the role hierarchy: Admin > Manager > Scanner.
+    /// The organizer always has implicit ADMIN rights.
+    ///
+    /// # Arguments
+    /// * `event_id` - The event to check
+    /// * `member` - The address of the team member
+    /// * `required_role` - The minimum role required
+    ///
+    /// # Returns
+    /// * `true` - If the member has the required role or higher
+    /// * `false` - If the member does not have sufficient permissions
+    pub fn has_event_permission(
+        env: Env,
+        event_id: String,
+        member: Address,
+        required_role: types::Role,
+    ) -> bool {
+        // Check if member is the organizer (implicit admin)
+        if let Some(event_info) = storage::get_event(&env, event_id.clone()) {
+            if member == event_info.organizer_address {
+                return true;
+            }
+        }
+
+        storage::has_event_role(&env, &event_id, &member, required_role)
+    }
 }
 
 fn require_admin(env: &Env) -> Result<Address, EventRegistryError> {
@@ -2518,3 +2673,6 @@ mod test_proposal_cancellation;
 
 #[cfg(test)]
 mod test_waitlist;
+
+#[cfg(test)]
+mod test_roles;

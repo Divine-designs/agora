@@ -36,31 +36,25 @@ pub enum EventRegistryError {
     StakingNotConfigured = 30,
     NoRewardsAvailable = 31,
     InvalidRewardAmount = 32,
-    InvalidMilestonePlan = 41,
-    RestockingFeeExceedsPrice = 42,
-    InvalidTags = 43,
-    // ── Governance / Multi-Sig errors ──────────────────────────────────
-    ProposalExpired = 44,
     AdminAlreadyExists = 33,
     CannotRemoveLastAdmin = 35,
     InvalidThreshold = 36,
     ProposalAlreadyExecuted = 38,
-    PerUserLimitExceeded = 60,
     EventNotEnded = 39,
-    // Generic variants used internally in lib.rs
-    StateError = 46, // bad contract state (e.g. staking not set up)
+    InvalidMilestonePlan = 41,
+    RestockingFeeExceedsPrice = 42,
+    InvalidTags = 43,
+    ProposalExpired = 44,
     ProposalAlreadyApproved = 45,
-    MultisigError = 47, // multisig auth failure
+    StateError = 46,
+    MultisigError = 47,
     ProposalAlreadyCancelled = 49,
-    // Governance / proposals
     InvalidTargetDeadline = 54,
     DeadlineAfterEndTime = 55,
-    InsufficientStakeAmount = 56,
-    InvalidRewardAmount = 57,
-    StakingNotConfigured = 58,
-    InvalidDeadline = 61, // deadline validation
-    InvalidStakeAmount = 70,
+    PerUserLimitExceeded = 60,
+    InvalidDeadline = 61,
     InvalidCategoryId = 71,
+    AlreadyOnWaitlist = 75,
 }
 
 impl core::fmt::Display for EventRegistryError {
@@ -164,9 +158,6 @@ impl core::fmt::Display for EventRegistryError {
                 "Tags are invalid: max 10 tags, each at most 32 characters"
             ),
             EventRegistryError::ProposalExpired => write!(f, "Proposal has expired"),
-            EventRegistryError::InvalidTargetDeadline | EventRegistryError::InvalidDeadline => {
-                write!(f, "Target deadline must be in the future")
-            }
             EventRegistryError::AdminAlreadyExists => {
                 write!(f, "Admin already exists in the multisig configuration")
             }
@@ -179,14 +170,32 @@ impl core::fmt::Display for EventRegistryError {
             EventRegistryError::InvalidThreshold => {
                 write!(f, "Threshold must be between 1 and the number of admins")
             }
+            EventRegistryError::ProposalAlreadyExecuted => {
+                write!(f, "Proposal has already been executed")
+            }
+            EventRegistryError::EventNotEnded => {
+                write!(f, "Event has not ended yet")
+            }
             EventRegistryError::ProposalAlreadyApproved => {
                 write!(f, "Admin has already approved this proposal")
             }
             EventRegistryError::ProposalAlreadyCancelled => {
                 write!(f, "Proposal has already been cancelled")
             }
+            EventRegistryError::InvalidTargetDeadline | EventRegistryError::InvalidDeadline => {
+                write!(f, "Target deadline must be in the future")
+            }
+            EventRegistryError::DeadlineAfterEndTime => {
+                write!(f, "Deadline must be before event end time")
+            }
+            EventRegistryError::PerUserLimitExceeded => {
+                write!(f, "User has exceeded the per-user ticket limit for this tier")
+            }
             EventRegistryError::InvalidCategoryId => {
                 write!(f, "Category ID is invalid or list exceeds 5 entries")
+            }
+            EventRegistryError::AlreadyOnWaitlist => {
+                write!(f, "User is already on the waitlist for this event")
             }
         }
     }

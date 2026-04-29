@@ -1,5 +1,19 @@
 use soroban_sdk::{contracttype, Address, Map, String, Vec};
 
+/// Role-based access control for event teams.
+/// Defines granular permissions for large events with multiple team members.
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum Role {
+    /// Full control over the event: can manage roles, edit all settings, pause/cancel event
+    Admin = 1,
+    /// Can edit tiers, pause/resume event, but cannot manage roles or cancel event
+    Manager = 2,
+    /// Can only check in attendees (call check_in functions), no edit permissions
+    Scanner = 3,
+}
+
 /// Platform-wide category mapping for event discovery.
 /// IDs are stable and must not be renumbered once deployed.
 #[contracttype]
@@ -469,4 +483,6 @@ pub enum DataKey {
     ApprovedOrganizer(Address),
     /// Index of event_ids tagged with a given category ID (Persistent)
     CategoryEvents(u32),
+    /// Mapping of (event_id, team_member_address) to Role for team-based access control (Persistent)
+    EventTeamRole(String, Address),
 }
