@@ -39,6 +39,7 @@ use soroban_sdk::{
 };
 
 const MAX_ORACLE_PRICE_AGE_SECS: u64 = 3600;
+const ESCROW_DELAY: u64 = 86400;
 
 /// Minimum claimable amount in stroops (0.01 USDC).
 /// Balances at or below this threshold are swept in full to avoid dust.
@@ -205,6 +206,19 @@ fn event_accepts_token(
 
 fn get_ticket_payment_id(_env: &Env, _ticket_id: u64) -> Option<String> {
     None
+}
+
+fn get_scheduled_price(
+    schedules: &soroban_sdk::Vec<crate::types::PriceSchedule>,
+    current_time: u64,
+    final_price: i128,
+) -> i128 {
+    for s in schedules.iter() {
+        if s.valid_until > current_time {
+            return s.price;
+        }
+    }
+    final_price
 }
 
 #[contract]
@@ -732,7 +746,9 @@ impl TicketPaymentContract {
             }
         } else {
             // ── Exact token-price matching (existing behaviour) ───────────
-            let mut active_price = tier.price;
+            let schedules: soroban_sdk::Vec<crate::types::PriceSchedule> =
+                soroban_sdk::Vec::new(&env);
+            let mut active_price = get_scheduled_price(&schedules, current_time, tier.price);
 
             if tier.early_bird_deadline > 0 && current_time <= tier.early_bird_deadline {
                 active_price = tier.early_bird_price;
@@ -1463,6 +1479,11 @@ impl TicketPaymentContract {
             .ok_or(TicketPaymentError::EventNotFound)?;
 
         event_info.organizer_address.require_auth();
+
+        if event_info.end_time > 0 && env.ledger().timestamp() < event_info.end_time + ESCROW_DELAY
+        {
+            return Err(TicketPaymentError::EventNotCompleted);
+        }
 
         let balance = get_event_balance(&env, event_id.clone());
         // Block all claim_revenue attempts for an event while a dispute is active.

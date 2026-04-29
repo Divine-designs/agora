@@ -35,6 +35,13 @@ pub struct AuctionConfig {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PriceSchedule {
+    pub price: i128,
+    pub valid_until: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ParameterChange {
     AddGovernor(Address),
     RemoveGovernor(Address),
