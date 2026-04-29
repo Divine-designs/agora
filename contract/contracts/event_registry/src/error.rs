@@ -52,10 +52,15 @@ pub enum EventRegistryError {
     ProposalAlreadyApproved = 45,
     MultisigError = 47, // multisig auth failure
     ProposalAlreadyCancelled = 49,
-    InvalidTargetDeadline = 50,
-    DeadlineAfterEndTime = 51,
-    AlreadyOnWaitlist = 52,
-    InvalidDeadline = 53,
+    // Governance / proposals
+    InvalidTargetDeadline = 54,
+    DeadlineAfterEndTime = 55,
+    InsufficientStakeAmount = 56,
+    InvalidRewardAmount = 57,
+    StakingNotConfigured = 58,
+    InvalidDeadline = 61, // deadline validation
+    InvalidStakeAmount = 70,
+    InvalidCategoryId = 71,
 }
 
 impl core::fmt::Display for EventRegistryError {
@@ -180,8 +185,8 @@ impl core::fmt::Display for EventRegistryError {
             EventRegistryError::ProposalAlreadyCancelled => {
                 write!(f, "Proposal has already been cancelled")
             }
-            EventRegistryError::AlreadyOnWaitlist => {
-                write!(f, "User is already on the waitlist for this event")
+            EventRegistryError::InvalidCategoryId => {
+                write!(f, "Category ID is invalid or list exceeds 5 entries")
             }
         }
     }
