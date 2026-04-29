@@ -12,8 +12,8 @@ use std::time::Duration;
 
 use crate::cache::RedisCache;
 use crate::models::event::Event;
+use crate::utils::cursor_pagination::{CursorParams, CursorResponse, EventCursor, encode_cursor, decode_cursor};
 use crate::utils::error::AppError;
-use crate::utils::pagination::{PaginatedResponse, PaginationParams};
 use crate::utils::response::success;
 
 /// Query parameters for searching events with filters
@@ -90,14 +90,14 @@ pub struct SubmitEventRatingResponse {
     pub average_rating: f32,
 }
 
-/// List all events with pagination and optional filters
+/// List upcoming events with cursor-based pagination and optional filters.
 ///
 /// # Endpoint
 /// GET `/api/v1/events`
 ///
 /// # Query Parameters
-/// - `page` (optional): Page number (default: 1)
-/// - `page_size` (optional): Items per page (default: 20, max: 100)
+/// - `limit` (optional): Items per page (default: 20, max: 100)
+/// - `cursor` (optional): Opaque cursor for the next page
 /// - `organizer_id` (optional): Filter by organizer
 /// - `location` (optional): Filter by location (partial match)
 /// - `start_after` (optional): Filter events starting after date
@@ -105,93 +105,88 @@ pub struct SubmitEventRatingResponse {
 /// - `search` (optional): Search in title and description
 ///
 /// # Response
-/// Returns a paginated list of events with metadata
+/// Returns a cursor-paginated list of upcoming events with metadata
 pub async fn list_events(
     State(state): State<EventState>,
-    Query(pagination): Query<PaginationParams>,
+    Query(pagination): Query<CursorParams>,
     Query(filters): Query<EventFilters>,
 ) -> Response {
-    let validated_pagination = pagination.validate();
-    
+    let validated = pagination.validate();
+
+    // Decode cursor if provided
+    let cursor = match validated.cursor {
+        Some(ref c) => match decode_cursor::<EventCursor>(c) {
+            Ok(c) => Some(c),
+            Err(e) => {
+                tracing::warn!("Invalid cursor provided: {}", e);
+                return AppError::ValidationError(format!("Invalid cursor: {}", e)).into_response();
+            }
+        },
+        None => None,
+    };
+
     // Build the WHERE clause dynamically based on filters
     let mut where_clauses = Vec::new();
     let mut param_count = 0;
-    
+
+    // Only show upcoming (not ended) events
+    where_clauses.push("end_time > NOW()".to_string());
+
     // Always exclude flagged events from public listings
     where_clauses.push("is_flagged = FALSE".to_string());
-    
+
     if filters.organizer_id.is_some() {
         param_count += 1;
         where_clauses.push(format!("organizer_id = ${}", param_count));
     }
-    
+
     if filters.location.is_some() {
         param_count += 1;
         where_clauses.push(format!("location ILIKE ${}", param_count));
     }
-    
+
     if filters.start_after.is_some() {
         param_count += 1;
         where_clauses.push(format!("start_time >= ${}", param_count));
     }
-    
+
     if filters.start_before.is_some() {
         param_count += 1;
         where_clauses.push(format!("start_time <= ${}", param_count));
     }
-    
+
     if filters.search.is_some() {
         param_count += 1;
         where_clauses.push(format!(
-            "(title ILIKE ${} OR description ILIKE ${})",
-            param_count, param_count
+            "(title ILIKE ${0} OR description ILIKE ${0})",
+            param_count
         ));
     }
-    
-    let where_clause = if where_clauses.is_empty() {
-        String::new()
-    } else {
-        format!("WHERE {}", where_clauses.join(" AND "))
-    };
-    
-    // Count total items
-    let count_query = format!("SELECT COUNT(*) FROM events {}", where_clause);
-    let mut count_query_builder = sqlx::query_scalar::<_, i64>(&count_query);
-    
-    if let Some(organizer_id) = filters.organizer_id {
-        count_query_builder = count_query_builder.bind(organizer_id);
+
+    // Cursor condition: (start_time, id) > (cursor.start_time, cursor.id)
+    if cursor.is_some() {
+        param_count += 1;
+        let st = param_count;
+        param_count += 1;
+        let id = param_count;
+        where_clauses.push(format!(
+            "(start_time > ${st} OR (start_time = ${st} AND id > ${id}))",
+            st = st,
+            id = id
+        ));
     }
-    if let Some(ref location) = filters.location {
-        count_query_builder = count_query_builder.bind(format!("%{}%", location));
-    }
-    if let Some(start_after) = filters.start_after {
-        count_query_builder = count_query_builder.bind(start_after);
-    }
-    if let Some(start_before) = filters.start_before {
-        count_query_builder = count_query_builder.bind(start_before);
-    }
-    if let Some(ref search) = filters.search {
-        count_query_builder = count_query_builder.bind(format!("%{}%", search));
-    }
-    
-    let total = match count_query_builder.fetch_one(&state.pool).await {
-        Ok(count) => count,
-        Err(e) => {
-            tracing::error!("Failed to count events: {:?}", e);
-            return AppError::DatabaseError(e).into_response();
-        }
-    };
-    
-    // Fetch paginated items
+
+    let where_clause = format!("WHERE {}", where_clauses.join(" AND "));
+
+    // Fetch items (limit + 1 to detect has_more)
     let items_query = format!(
-        "SELECT * FROM events {} ORDER BY start_time DESC LIMIT ${} OFFSET ${}",
+        "SELECT * FROM events {} ORDER BY start_time ASC, id ASC LIMIT ${}",
         where_clause,
-        param_count + 1,
-        param_count + 2
+        param_count + 1
     );
-    
+
     let mut items_query_builder = sqlx::query_as::<_, Event>(&items_query);
-    
+
     if let Some(organizer_id) = filters.organizer_id {
         items_query_builder = items_query_builder.bind(organizer_id);
     }
@@ -207,20 +202,41 @@ pub async fn list_events(
     if let Some(ref search) = filters.search {
         items_query_builder = items_query_builder.bind(format!("%{}%", search));
     }
-    
-    items_query_builder = items_query_builder
-        .bind(validated_pagination.limit())
-        .bind(validated_pagination.offset());
-    
-    let items = match items_query_builder.fetch_all(&state.pool).await {
+    if let Some(ref c) = cursor {
+        items_query_builder = items_query_builder.bind(c.start_time);
+        items_query_builder = items_query_builder.bind(c.id);
+    }
+
+    items_query_builder = items_query_builder.bind(validated.query_limit());
+
+    let mut items = match items_query_builder.fetch_all(&state.pool).await {
         Ok(events) => events,
         Err(e) => {
             tracing::error!("Failed to fetch events: {:?}", e);
             return AppError::DatabaseError(e).into_response();
         }
     };
-    
-    let response = PaginatedResponse::new(items, validated_pagination, total);
+
+    // Determine if there are more pages
+    let has_more = items.len() > validated.page_size();
+    let next_cursor = if has_more {
+        // Remove the extra item used for detection
+        let last = items.pop().unwrap();
+        match encode_cursor(&EventCursor {
+            start_time: last.start_time,
+            id: last.id,
+        }) {
+            Ok(c) => Some(c),
+            Err(e) => {
+                tracing::error!("Failed to encode cursor: {:?}", e);
+                return AppError::InternalServerError("Failed to encode cursor".to_string()).into_response();
+            }
+        }
+    } else {
+        None
+    };
+
+    let response = CursorResponse::new(items, &validated, next_cursor);
     success(response, "Events retrieved successfully").into_response()
 }
 
