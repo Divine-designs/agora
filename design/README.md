@@ -10,3 +10,7 @@ If you are tackling a design issue (e.g. `[Design] Signed-In User Home Screen`),
 4. Include a screenshot of your design in your Pull Request description.
 
 _For Figma access, contact `@divine_oseh` on Telegram._
+
+## API Specification
+The Agora Events API is documented using the OpenAPI 3.0 specification.
+- [View OpenAPI Specification](../apps/web/public/openapi.yaml)

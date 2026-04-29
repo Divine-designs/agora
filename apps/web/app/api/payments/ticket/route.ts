@@ -20,12 +20,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const { eventId, quantity, buyerWallet } = payload;
 
+  // Validation
   if (!eventId || typeof eventId !== "string") {
     throwApiError("Invalid eventId", 400);
   }
-  if (!Number.isInteger(quantity) || (quantity ?? 0) <= 0) {
+
+  // Ensure quantity is a valid number and cast it for TypeScript safety
+  if (typeof quantity !== "number" || !Number.isInteger(quantity) || quantity <= 0) {
     throwApiError("Invalid quantity", 400);
   }
+
+  // Type assertion for subsequent logic
+  const qty = quantity as number;
+
   if (!buyerWallet || typeof buyerWallet !== "string") {
     throwApiError("Invalid buyerWallet", 400);
   }
@@ -38,8 +45,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throwApiError("Event not found", 404);
   }
 
-  const qty = quantity as number;
-
+  // Check ticket availability using Prisma data
   if (event.mintedTickets + qty > event.totalTickets) {
     throwApiError("Not enough tickets available", 409);
   }
@@ -47,6 +53,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   try {
     const mintResult = await mintTicket(eventId, buyerWallet, qty);
 
+    // Atomically update event count and create ticket record
     await prisma.$transaction([
       prisma.event.update({
         where: { id: eventId },
@@ -71,8 +78,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    console.error("Minting Error:", error);
     throwApiError("Failed to mint ticket", 502);
   }
 });
-
-
