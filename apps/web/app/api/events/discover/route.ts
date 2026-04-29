@@ -39,6 +39,7 @@ export const GET = withErrorHandler(async () => {
       }
       return acc;
     }, new Map<string, { id: string; title: string; description: string; image: string }>()),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ).map((entry: any) => entry[1]);
 
   return NextResponse.json({ categories, popularEvents, organizers });
