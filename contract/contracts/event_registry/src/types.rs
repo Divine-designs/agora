@@ -412,6 +412,8 @@ pub enum DataKey {
     GlobalTicketsSold,
     /// Mapping of (event_id, tier_id, user_address) to ticket count for per-user limits (Persistent)
     UserTicketCount(String, String, Address),
+    /// Mapping of (event_id, user_address) to bool for waitlist membership (Persistent)
+    Waitlist(String, Address),
     /// Mapping of event_id to pause status (bool) – whether the event is paused (Persistent)
     EventPaused(String),
     /// The administrator address specifically for organizer whitelisting (Instance)

@@ -31,31 +31,31 @@ pub enum EventRegistryError {
     // Staking / loyalty
     AlreadyStaked = 26,
     NotStaked = 27,
-    NoRewardsAvailable = 28,
-    InvalidMilestonePlan = 29,
-    ProposalExpired = 30,
-    RestockingFeeExceedsPrice = 31,
-    // Multisig-specific error codes (must match test expectations)
+    InsufficientStakeAmount = 28,
+    InvalidStakeAmount = 29,
+    StakingNotConfigured = 30,
+    NoRewardsAvailable = 31,
+    InvalidRewardAmount = 32,
+    InvalidMilestonePlan = 41,
+    RestockingFeeExceedsPrice = 42,
+    InvalidTags = 43,
+    // ── Governance / Multi-Sig errors ──────────────────────────────────
+    ProposalExpired = 44,
     AdminAlreadyExists = 33,
     CannotRemoveLastAdmin = 35,
     InvalidThreshold = 36,
     ProposalAlreadyExecuted = 38,
-    InvalidTags = 59,
     PerUserLimitExceeded = 60,
     EventNotEnded = 39,
     // Generic variants used internally in lib.rs
-    StateError = 43, // bad contract state (e.g. staking not set up)
+    StateError = 46, // bad contract state (e.g. staking not set up)
     ProposalAlreadyApproved = 45,
     MultisigError = 47, // multisig auth failure
     ProposalAlreadyCancelled = 49,
-    // Governance / proposals
-    InvalidTargetDeadline = 54,
-    DeadlineAfterEndTime = 55,
-    InsufficientStakeAmount = 56,
-    InvalidRewardAmount = 57,
-    StakingNotConfigured = 58,
-    InvalidDeadline = 61, // deadline validation
-    InvalidStakeAmount = 70,
+    InvalidTargetDeadline = 50,
+    DeadlineAfterEndTime = 51,
+    AlreadyOnWaitlist = 52,
+    InvalidDeadline = 53,
 }
 
 impl core::fmt::Display for EventRegistryError {
@@ -162,21 +162,6 @@ impl core::fmt::Display for EventRegistryError {
             EventRegistryError::InvalidTargetDeadline | EventRegistryError::InvalidDeadline => {
                 write!(f, "Target deadline must be in the future")
             }
-            EventRegistryError::ProposalAlreadyExecuted => {
-                write!(f, "Proposal has already been executed")
-            }
-            EventRegistryError::DeadlineAfterEndTime => write!(
-                f,
-                "refund_deadline and target_deadline must be before end_time"
-            ),
-            EventRegistryError::PerUserLimitExceeded => write!(
-                f,
-                "User has exceeded the maximum number of tickets allowed for this tier"
-            ),
-            EventRegistryError::EventNotEnded => write!(
-                f,
-                "Event has not ended yet; feedback CID can only be set after end_time"
-            ),
             EventRegistryError::AdminAlreadyExists => {
                 write!(f, "Admin already exists in the multisig configuration")
             }
@@ -194,6 +179,24 @@ impl core::fmt::Display for EventRegistryError {
             }
             EventRegistryError::ProposalAlreadyCancelled => {
                 write!(f, "Proposal has already been cancelled")
+            }
+            EventRegistryError::ProposalAlreadyExecuted => {
+                write!(f, "Proposal has already been executed")
+            }
+            EventRegistryError::PerUserLimitExceeded => write!(
+                f,
+                "User has exceeded the maximum number of tickets allowed for this tier"
+            ),
+            EventRegistryError::EventNotEnded => write!(
+                f,
+                "Event has not ended yet; feedback CID can only be set after end_time"
+            ),
+            EventRegistryError::DeadlineAfterEndTime => write!(
+                f,
+                "refund_deadline and target_deadline must be before end_time"
+            ),
+            EventRegistryError::AlreadyOnWaitlist => {
+                write!(f, "User is already on the waitlist for this event")
             }
         }
     }
