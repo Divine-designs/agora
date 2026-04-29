@@ -13,7 +13,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { dataEvents } from "../events/mockups";
 import { useRecommendedEvents, RecommendedEvent } from "@/hooks/useRecommendedEvents";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
