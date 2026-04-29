@@ -5,18 +5,20 @@ use crate::storage::{
     get_admin, get_bulk_refund_index, get_daily_withdrawn_amount, get_discount_code,
     get_event_balance, get_event_payments, get_event_registry, get_highest_bid, get_oracle_address,
     get_partial_refund_index, get_partial_refund_percentage, get_payment, get_platform_wallet,
-    get_proposal, get_slippage_bps, get_total_fees_collected_by_token, get_total_governors,
-    get_transfer_fee, get_withdrawal_cap, has_price_switched, increment_proposal_count,
-    is_auction_closed, is_discount_hash_used, is_discount_hash_valid, is_event_disputed,
-    is_governor, is_initialized, is_paused, is_token_whitelisted, mark_discount_hash_used,
-    remove_payment_from_buyer_index, remove_token_from_whitelist, set_admin, set_auction_closed,
-    set_bulk_refund_index, set_discount_code, set_event_dispute_status, set_event_registry,
-    set_governor, set_highest_bid, set_initialized, set_is_paused, set_oracle_address,
+    get_pro_subscription_contract, get_proposal, get_slippage_bps,
+    get_total_fees_collected_by_token, get_total_governors, get_transfer_fee, get_withdrawal_cap,
+    has_price_switched, increment_proposal_count, is_auction_closed, is_discount_hash_used,
+    is_discount_hash_valid, is_event_disputed, is_governor, is_initialized, is_paused,
+    is_token_whitelisted, mark_discount_hash_used, remove_payment_from_buyer_index,
+    remove_token_from_whitelist, set_admin, set_auction_closed, set_bulk_refund_index,
+    set_discount_code, set_event_dispute_status, set_event_registry, set_governor,
+    set_highest_bid, set_initialized, set_is_paused, set_oracle_address,
     set_partial_refund_index, set_partial_refund_percentage, set_platform_wallet,
-    set_price_switched, set_proposal, set_slippage_bps, set_total_governors, set_transfer_fee,
-    set_usdc_token, set_withdrawal_cap, store_payment, store_validation_hash,
-    subtract_from_active_escrow_by_token, subtract_from_active_escrow_total,
-    subtract_from_total_fees_collected_by_token, update_event_balance, verify_secret,
+    set_price_switched, set_pro_subscription_contract, set_proposal, set_slippage_bps,
+    set_total_governors, set_transfer_fee, set_usdc_token, set_withdrawal_cap, store_payment,
+    store_validation_hash, subtract_from_active_escrow_by_token,
+    subtract_from_active_escrow_total, subtract_from_total_fees_collected_by_token,
+    update_event_balance, verify_secret,
 };
 use crate::types::{
     DataKey, DiscountData, HighestBid, ParameterChange, ParameterProposal, Payment, PaymentStatus,
@@ -59,6 +61,16 @@ pub mod price_oracle {
     #[contractclient(name = "OracleClient")]
     pub trait PriceOracleInterface {
         fn lastprice(env: Env, asset: Address) -> Option<PriceData>;
+    }
+}
+
+// Pro Subscription interface
+pub mod pro_subscription {
+    use soroban_sdk::{contractclient, Address, Env};
+
+    #[contractclient(name = "ProSubscriptionClient")]
+    pub trait ProSubscriptionInterface {
+        fn is_pro_member(env: Env, organizer: Address) -> bool;
     }
 }
 
@@ -784,9 +796,26 @@ impl TicketPaymentContract {
         }
 
         // 2. Calculate platform fee
-        let fee_bps = event_info
-            .custom_fee_bps
-            .unwrap_or(event_info.platform_fee_percent);
+        // Check if organizer is a pro member - if so, platform fee is 0%
+        let organizer_address = event_info.organizer_address.clone();
+        let is_pro = if let Some(pro_contract_addr) = get_pro_subscription_contract(&env) {
+            let pro_client = pro_subscription::ProSubscriptionClient::new(&env, &pro_contract_addr);
+            pro_client
+                .try_is_pro_member(&organizer_address)
+                .ok()
+                .and_then(|r| r.ok())
+                .unwrap_or(false)
+        } else {
+            false
+        };
+
+        let fee_bps = if is_pro {
+            0u32 // Pro members pay 0% platform fee
+        } else {
+            event_info
+                .custom_fee_bps
+                .unwrap_or(event_info.platform_fee_percent)
+        };
 
         let mut total_platform_fee = effective_total
             .checked_mul(fee_bps as i128)

@@ -172,6 +172,18 @@ pub fn get_event_registry(env: &Env) -> Address {
         .expect("Event registry not set")
 }
 
+pub fn set_pro_subscription_contract(env: &Env, address: Address) {
+    env.storage()
+        .persistent()
+        .set(&DataKey::ProSubscriptionContract, &address);
+}
+
+pub fn get_pro_subscription_contract(env: &Env) -> Option<Address> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::ProSubscriptionContract)
+}
+
 pub fn set_initialized(env: &Env, value: bool) {
     env.storage()
         .persistent()
