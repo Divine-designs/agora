@@ -41,3 +41,15 @@ model Ticket {
   quantity    Int      @default(1)
   createdAt   DateTime @default(now())
 }
+
+/// Organizer brand profile keyed by Stellar wallet address.
+/// Issue #486: Organizer Profile Management
+model OrganizerProfile {
+  address     String   @id
+  displayName String   @db.VarChar(50)
+  bio         String?  @db.VarChar(500)
+  avatarUrl   String?
+  socials     Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

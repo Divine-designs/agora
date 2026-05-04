@@ -17,7 +17,12 @@ export const GET = withErrorHandler(async (_request: NextRequest, { params }: Pa
     throwApiError("Event not found", 404);
   }
 
-  return NextResponse.json({ event });
+  // Issue #486: include organizer profile in event detail response
+  const organizerProfile = await prisma.organizerProfile
+    .findUnique({ where: { address: event!.organizerWallet } })
+    .catch(() => null);
+
+  return NextResponse.json({ event, organizerProfile });
 });
 
 
