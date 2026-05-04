@@ -6,13 +6,12 @@
 //! - Disk space availability
 //! - Memory availability
 
-use axum::{extract::State, response::IntoResponse, response::Response, http::StatusCode};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, response::Response};
 use serde::Serialize;
 use sqlx::PgPool;
 use sysinfo::{Disks, System};
 
 use crate::cache::RedisCache;
-use crate::utils::error::AppError;
 use crate::utils::response::success;
 
 #[derive(Serialize)]
@@ -65,7 +64,7 @@ pub struct MonitoringState {
 /// Returns 503 Service Unavailable if any critical component is down.
 pub async fn monitoring_dashboard(State(state): State<MonitoringState>) -> Response {
     let mut redis = state.redis.clone();
-    
+
     // Check database
     let db_health = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => ComponentHealth {
@@ -100,7 +99,12 @@ pub async fn monitoring_dashboard(State(state): State<MonitoringState>) -> Respo
         let usage_percent = ((total_bytes - available_bytes) as f64 / total_bytes as f64) * 100.0;
 
         DiskHealth {
-            status: if available_gb > 5.0 { "healthy" } else { "warning" }.to_string(),
+            status: if available_gb > 5.0 {
+                "healthy"
+            } else {
+                "warning"
+            }
+            .to_string(),
             available_gb,
             total_gb,
             usage_percent,
@@ -124,7 +128,12 @@ pub async fn monitoring_dashboard(State(state): State<MonitoringState>) -> Respo
     let usage_percent = ((total_memory - available_memory) as f64 / total_memory as f64) * 100.0;
 
     let memory_health = MemoryHealth {
-        status: if available_gb > 1.0 { "healthy" } else { "warning" }.to_string(),
+        status: if available_gb > 1.0 {
+            "healthy"
+        } else {
+            "warning"
+        }
+        .to_string(),
         available_gb,
         total_gb,
         usage_percent,
@@ -155,7 +164,8 @@ pub async fn monitoring_dashboard(State(state): State<MonitoringState>) -> Respo
                 "success": false,
                 "message": "One or more critical components are down",
                 "data": dashboard
-            }))
-        ).into_response()
+            })),
+        )
+            .into_response()
     }
 }

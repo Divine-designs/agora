@@ -3,7 +3,10 @@
 //! Provides the leaderboard endpoint that ranks organizers by tickets sold.
 //! Supports `all_time`, `monthly`, and `weekly` timeframes.
 
-use axum::{extract::{Query, State}, response::{IntoResponse, Response}};
+use axum::{
+    extract::{Query, State},
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 

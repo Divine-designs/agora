@@ -1407,7 +1407,11 @@ impl EventRegistry {
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
     /// * `Unauthorized` - If the caller does not have MANAGER or ADMIN role
-    pub fn pause_event(env: Env, caller: Address, event_id: String) -> Result<(), EventRegistryError> {
+    pub fn pause_event(
+        env: Env,
+        caller: Address,
+        event_id: String,
+    ) -> Result<(), EventRegistryError> {
         caller.require_auth();
 
         let event_info =
@@ -1415,7 +1419,8 @@ impl EventRegistry {
 
         // Check if caller is organizer or has MANAGER/ADMIN role
         let is_organizer = caller == event_info.organizer_address;
-        let has_permission = storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
+        let has_permission =
+            storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
 
         if !is_organizer && !has_permission {
             return Err(EventRegistryError::Unauthorized);
@@ -1454,7 +1459,11 @@ impl EventRegistry {
     /// # Errors
     /// * `EventNotFound` - If no event with the given ID exists
     /// * `Unauthorized` - If the caller does not have MANAGER or ADMIN role
-    pub fn resume_event(env: Env, caller: Address, event_id: String) -> Result<(), EventRegistryError> {
+    pub fn resume_event(
+        env: Env,
+        caller: Address,
+        event_id: String,
+    ) -> Result<(), EventRegistryError> {
         caller.require_auth();
 
         let event_info =
@@ -1462,7 +1471,8 @@ impl EventRegistry {
 
         // Check if caller is organizer or has MANAGER/ADMIN role
         let is_organizer = caller == event_info.organizer_address;
-        let has_permission = storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
+        let has_permission =
+            storage::has_event_role(&env, &event_id, &caller, types::Role::Manager);
 
         if !is_organizer && !has_permission {
             return Err(EventRegistryError::Unauthorized);

@@ -189,7 +189,10 @@ impl core::fmt::Display for EventRegistryError {
                 write!(f, "Deadline must be before event end time")
             }
             EventRegistryError::PerUserLimitExceeded => {
-                write!(f, "User has exceeded the per-user ticket limit for this tier")
+                write!(
+                    f,
+                    "User has exceeded the per-user ticket limit for this tier"
+                )
             }
             EventRegistryError::InvalidCategoryId => {
                 write!(f, "Category ID is invalid or list exceeds 5 entries")

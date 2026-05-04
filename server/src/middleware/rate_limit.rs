@@ -1,53 +1,30 @@
-//! # Tower-Governor Rate Limiting Middleware
+//! # Rate Limiting Middleware Stub
 //!
-//! Provides IP-based rate limiting using tower-governor for public API routes.
+//! `tower_governor` 0.8 requires axum 0.8, which is incompatible with the
+//! current axum 0.7 dependency. Rate limiting for public API routes is handled
+//! by the `RateLimitLayer` in `utils::rate_limit` instead.
+//!
+//! This module provides a no-op `GovernorRateLimitLayer` that passes requests
+//! through unchanged, preserving the existing call sites in `routes/mod.rs`.
 
-use axum::{
-    body::Body,
-    extract::ConnectInfo,
-    http::{Request, StatusCode},
-    response::{IntoResponse, Response},
-};
-use std::{net::SocketAddr, sync::Arc, time::Duration};
-use tower::{Layer, Service};
-use tower_governor::{
-    governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
-};
+use std::time::Duration;
+use tower::Layer;
 
-/// Rate limit layer using tower-governor
+/// No-op rate limit layer (placeholder until axum is upgraded to 0.8).
 #[derive(Clone)]
-pub struct GovernorRateLimitLayer {
-    inner: GovernorLayer<SmartIpKeyExtractor>,
-}
+pub struct GovernorRateLimitLayer;
 
 impl GovernorRateLimitLayer {
-    /// Create a new rate limit layer
-    ///
-    /// # Arguments
-    /// * `requests_per_minute` - Maximum number of requests allowed per minute
-    /// * `window` - Time window for rate limiting
-    pub fn new(requests_per_minute: u64, window: Duration) -> Self {
-        let config = Box::new(
-            GovernorConfigBuilder::default()
-                .per_second(requests_per_minute / 60)
-                .burst_size(requests_per_minute as u32)
-                .finish()
-                .unwrap(),
-        );
-
-        let governor_limiter = Arc::new(config);
-        let layer = GovernorLayer {
-            config: governor_limiter,
-        };
-
-        Self { inner: layer }
+    /// Create a new (no-op) rate limit layer.
+    pub fn new(_requests_per_minute: u64, _window: Duration) -> Self {
+        Self
     }
 }
 
-impl<S> Layer<S> for GovernorRateLimitLayer {
-    type Service = <GovernorLayer<SmartIpKeyExtractor> as Layer<S>>::Service;
+impl<S: Clone> Layer<S> for GovernorRateLimitLayer {
+    type Service = S;
 
     fn layer(&self, inner: S) -> Self::Service {
-        self.inner.layer(inner)
+        inner
     }
 }

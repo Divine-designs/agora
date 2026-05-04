@@ -35,7 +35,7 @@ fn default_page_size() -> u32 {
 impl CursorParams {
     /// Validate and normalize pagination parameters
     pub fn validate(self) -> ValidatedCursorParams {
-        let limit = self.limit.min(MAX_PAGE_SIZE).max(1);
+        let limit = self.limit.clamp(1, MAX_PAGE_SIZE);
         ValidatedCursorParams {
             limit,
             cursor: self.cursor,
@@ -90,7 +90,11 @@ impl<T> CursorResponse<T> {
     ///
     /// `items` may contain up to `limit + 1` rows; if it contains the extra row,
     /// that row is removed and used to generate `next_cursor`.
-    pub fn new(mut items: Vec<T>, params: &ValidatedCursorParams, next_cursor: Option<String>) -> Self {
+    pub fn new(
+        items: Vec<T>,
+        _params: &ValidatedCursorParams,
+        next_cursor: Option<String>,
+    ) -> Self {
         let has_more = next_cursor.is_some();
         let returned_count = items.len() as u32;
 
@@ -208,7 +212,8 @@ mod tests {
             limit: 2,
             cursor: None,
         };
-        let response: CursorResponse<i32> = CursorResponse::new(vec![1, 2], &params, Some("abc".to_string()));
+        let response: CursorResponse<i32> =
+            CursorResponse::new(vec![1, 2], &params, Some("abc".to_string()));
         assert!(response.pagination.has_more);
         assert_eq!(response.pagination.next_cursor, Some("abc".to_string()));
     }
@@ -224,4 +229,3 @@ mod tests {
         assert!(response.pagination.next_cursor.is_none());
     }
 }
-

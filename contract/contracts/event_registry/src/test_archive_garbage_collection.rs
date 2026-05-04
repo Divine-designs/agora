@@ -437,9 +437,27 @@ fn test_multiple_events_archival() {
     let event_id_3 = String::from_str(&env, "event_3");
 
     let event_end_time = initial_time + (24 * 60 * 60);
-    register_test_event(&env, &client, event_id_1.clone(), &organizer, event_end_time);
-    register_test_event(&env, &client, event_id_2.clone(), &organizer, event_end_time);
-    register_test_event(&env, &client, event_id_3.clone(), &organizer, event_end_time);
+    register_test_event(
+        &env,
+        &client,
+        event_id_1.clone(),
+        &organizer,
+        event_end_time,
+    );
+    register_test_event(
+        &env,
+        &client,
+        event_id_2.clone(),
+        &organizer,
+        event_end_time,
+    );
+    register_test_event(
+        &env,
+        &client,
+        event_id_3.clone(),
+        &organizer,
+        event_end_time,
+    );
 
     // Deactivate all events
     client.update_event_status(&event_id_1, &false);
