@@ -644,7 +644,7 @@ impl EventRegistry {
                 let grace_period: u64 = 30 * 24 * 60 * 60; // 30 days in seconds
                 let archive_eligible_time = event_info.end_time.saturating_add(grace_period);
 
-                if now < archive_eligible_time {
+                if now <= archive_eligible_time {
                     return Err(EventRegistryError::InvalidDeadline);
                 }
 

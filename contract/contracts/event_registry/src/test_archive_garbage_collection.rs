@@ -61,7 +61,7 @@ fn register_test_event(
         name: String::from_str(env, "Test Event for Archival"),
         organizer_address: organizer.clone(),
         payment_address: organizer.clone(),
-        metadata_cid: String::from_str(env, "QmTest123456789012345678901234567890123456789"),
+        metadata_cid: String::from_str(env, "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"),
         max_supply: 100,
         milestone_plan: None,
         tiers,
@@ -99,7 +99,7 @@ fn test_archive_event_success_after_30_days() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -127,7 +127,7 @@ fn test_archive_event_success_after_30_days() {
     let archive_time = event_end_time + grace_period + 1;
     env.ledger().set(LedgerInfo {
         timestamp: archive_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 100,
         network_id: Default::default(),
         base_reserve: 10,
@@ -163,7 +163,7 @@ fn test_archive_event_fails_before_30_days() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -183,7 +183,7 @@ fn test_archive_event_fails_before_30_days() {
     let too_early_time = event_end_time + (29 * 24 * 60 * 60);
     env.ledger().set(LedgerInfo {
         timestamp: too_early_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 50,
         network_id: Default::default(),
         base_reserve: 10,
@@ -211,7 +211,7 @@ fn test_archive_event_fails_if_active() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -230,7 +230,7 @@ fn test_archive_event_fails_if_active() {
     let archive_time = event_end_time + (30 * 24 * 60 * 60) + 1;
     env.ledger().set(LedgerInfo {
         timestamp: archive_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 100,
         network_id: Default::default(),
         base_reserve: 10,
@@ -260,7 +260,7 @@ fn test_archive_event_fails_if_no_end_time() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -279,7 +279,7 @@ fn test_archive_event_fails_if_no_end_time() {
     let future_time = initial_time + (365 * 24 * 60 * 60); // 1 year later
     env.ledger().set(LedgerInfo {
         timestamp: future_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 1000,
         network_id: Default::default(),
         base_reserve: 10,
@@ -318,7 +318,7 @@ fn test_archive_event_exactly_at_30_days() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -338,7 +338,7 @@ fn test_archive_event_exactly_at_30_days() {
     let exact_30_days = event_end_time + (30 * 24 * 60 * 60);
     env.ledger().set(LedgerInfo {
         timestamp: exact_30_days,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 100,
         network_id: Default::default(),
         base_reserve: 10,
@@ -364,7 +364,7 @@ fn test_archive_event_with_sold_tickets() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -394,7 +394,7 @@ fn test_archive_event_with_sold_tickets() {
     let archive_time = event_end_time + (30 * 24 * 60 * 60) + 1;
     env.ledger().set(LedgerInfo {
         timestamp: archive_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 100,
         network_id: Default::default(),
         base_reserve: 10,
@@ -422,7 +422,7 @@ fn test_multiple_events_archival() {
     let initial_time = 1_000_000u64;
     env.ledger().set(LedgerInfo {
         timestamp: initial_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 10,
         network_id: Default::default(),
         base_reserve: 10,
@@ -468,7 +468,7 @@ fn test_multiple_events_archival() {
     let archive_time = event_end_time + (30 * 24 * 60 * 60) + 1;
     env.ledger().set(LedgerInfo {
         timestamp: archive_time,
-        protocol_version: 20,
+        protocol_version: 23,
         sequence_number: 100,
         network_id: Default::default(),
         base_reserve: 10,

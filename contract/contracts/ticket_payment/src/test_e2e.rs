@@ -22,6 +22,7 @@ impl MockRegistryE2E {
             payment_address: Address::generate(&env),
             platform_fee_percent: 500,
             custom_fee_bps: None, // 5%
+            referral_rate_bps: 0,
         }
     }
 
@@ -98,6 +99,7 @@ impl MockRegistryE2E {
             end_time: stored_end_time,
             accepted_tokens: soroban_sdk::vec![&env],
             use_global_whitelist: true,
+            referral_rate_bps: 0,
         })
     }
 
@@ -168,6 +170,7 @@ impl MockRegistryCancelledE2E {
             payment_address: Address::generate(&env),
             platform_fee_percent: 500,
             custom_fee_bps: None,
+            referral_rate_bps: 0,
         }
     }
 
@@ -227,6 +230,7 @@ impl MockRegistryCancelledE2E {
             end_time: 0,
             accepted_tokens: soroban_sdk::vec![&env],
             use_global_whitelist: true,
+            referral_rate_bps: 0,
         })
     }
 
@@ -257,6 +261,7 @@ impl MockRegistryWithGoal {
             payment_address: Address::generate(&env),
             platform_fee_percent: 500,
             custom_fee_bps: None,
+            referral_rate_bps: 0,
         }
     }
 
@@ -329,6 +334,7 @@ impl MockRegistryWithGoal {
             end_time: 0,
             accepted_tokens: soroban_sdk::vec![&env],
             use_global_whitelist: true,
+            referral_rate_bps: 0,
         })
     }
 
@@ -441,9 +447,10 @@ fn buy_ticket(
         &String::from_str(env, event_id),
         &String::from_str(env, "tier_1"),
         buyer,
+        &None::<Address>,
         usdc_id,
         &amount,
-        &1,
+        &1u32,
         &crate::types::PurchaseOptions {
             code_preimage: None,
             referrer: None,
@@ -665,9 +672,10 @@ fn test_e2e_duplicate_payment_id_rejected() {
         &String::from_str(&env, "event_1"),
         &String::from_str(&env, "tier_1"),
         &buyer,
+        &None::<Address>,
         &usdc_id,
         &amount,
-        &1,
+        &1u32,
         &crate::types::PurchaseOptions {
             code_preimage: None,
             referrer: None,
@@ -720,9 +728,10 @@ fn test_e2e_state_consistent_after_failed_payment() {
         &String::from_str(&env, "event_1"),
         &String::from_str(&env, "tier_1"),
         &buyer,
+        &None::<Address>,
         &non_whitelisted_token,
         &amount,
-        &1,
+        &1u32,
         &crate::types::PurchaseOptions {
             code_preimage: None,
             referrer: None,
@@ -772,6 +781,7 @@ fn test_e2e_batch_purchase_then_partial_refund() {
         &String::from_str(&env, "event_1"),
         &String::from_str(&env, "tier_1"),
         &buyer,
+        &None::<Address>,
         &usdc_id,
         &amount_per_ticket,
         &quantity,
@@ -905,9 +915,10 @@ fn test_e2e_pause_blocks_operations_resume_allows() {
         &String::from_str(&env, "event_1"),
         &String::from_str(&env, "tier_1"),
         &buyer,
+        &None::<Address>,
         &usdc_id,
         &amount,
-        &1,
+        &1u32,
         &crate::types::PurchaseOptions {
             code_preimage: None,
             referrer: None,
@@ -927,9 +938,10 @@ fn test_e2e_pause_blocks_operations_resume_allows() {
         &String::from_str(&env, "event_1"),
         &String::from_str(&env, "tier_1"),
         &buyer,
+        &None::<Address>,
         &usdc_id,
         &amount,
-        &1,
+        &1u32,
         &crate::types::PurchaseOptions {
             code_preimage: None,
             referrer: None,
@@ -1098,6 +1110,7 @@ impl MockRegistryAuction {
             payment_address: Address::generate(&env),
             platform_fee_percent: 500,
             custom_fee_bps: None, // 5%
+            referral_rate_bps: 0,
         }
     }
 
@@ -1157,6 +1170,7 @@ impl MockRegistryAuction {
             end_time: 0,
             accepted_tokens: soroban_sdk::vec![&env],
             use_global_whitelist: true,
+            referral_rate_bps: 0,
         })
     }
 

@@ -2512,6 +2512,7 @@ impl TicketPaymentContract {
             payment_id: payment_id.clone(),
             event_id: event_id.clone(),
             buyer_address: bidder_address.clone(),
+            owner_address: bidder_address.clone(),
             ticket_tier_id: ticket_tier_id.clone(),
             token_address: winning_bid.token_address,
             amount,
@@ -2524,6 +2525,8 @@ impl TicketPaymentContract {
             refunded_amount: 0,
             is_soulbound: false,
             last_checked_in_at: 0,
+            referral_amount: 0,
+            referrer: None,
         };
         store_payment(&env, payment);
 

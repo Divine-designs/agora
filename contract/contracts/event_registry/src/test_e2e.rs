@@ -56,6 +56,7 @@ fn make_event_args(
         accepted_tokens: soroban_sdk::Vec::new(env),
         use_global_whitelist: true,
         category_ids: None,
+        referral_rate_bps: None,
     }
 }
 
