@@ -1197,16 +1197,26 @@ pub fn get_events_by_category(env: &Env, category_id: u32) -> Vec<String> {
 
 /// Sets the role for a team member on a specific event.
 /// Storage key: DataKey::EventTeamRole(event_id, member_address). Storage type: Persistent
-pub fn set_event_team_role(env: &Env, event_id: &String, member: &Address, role: crate::types::Role) {
-    env.storage()
-        .persistent()
-        .set(&DataKey::EventTeamRole(event_id.clone(), member.clone()), &role);
+pub fn set_event_team_role(
+    env: &Env,
+    event_id: &String,
+    member: &Address,
+    role: crate::types::Role,
+) {
+    env.storage().persistent().set(
+        &DataKey::EventTeamRole(event_id.clone(), member.clone()),
+        &role,
+    );
 }
 
 /// Gets the role for a team member on a specific event.
 /// Returns None if the member has no role assigned.
 /// Storage key: DataKey::EventTeamRole(event_id, member_address). Storage type: Persistent
-pub fn get_event_team_role(env: &Env, event_id: &String, member: &Address) -> Option<crate::types::Role> {
+pub fn get_event_team_role(
+    env: &Env,
+    event_id: &String,
+    member: &Address,
+) -> Option<crate::types::Role> {
     env.storage()
         .persistent()
         .get(&DataKey::EventTeamRole(event_id.clone(), member.clone()))
@@ -1223,7 +1233,12 @@ pub fn remove_event_team_role(env: &Env, event_id: &String, member: &Address) {
 /// Checks if a member has a specific role or higher for an event.
 /// Role hierarchy: Admin > Manager > Scanner
 /// Returns true if the member has the required role or a higher role.
-pub fn has_event_role(env: &Env, event_id: &String, member: &Address, required_role: crate::types::Role) -> bool {
+pub fn has_event_role(
+    env: &Env,
+    event_id: &String,
+    member: &Address,
+    required_role: crate::types::Role,
+) -> bool {
     if let Some(member_role) = get_event_team_role(env, event_id, member) {
         // Check role hierarchy: Admin (1) > Manager (2) > Scanner (3)
         (member_role as u32) <= (required_role as u32)
@@ -1231,4 +1246,3 @@ pub fn has_event_role(env: &Env, event_id: &String, member: &Address, required_r
         false
     }
 }
-

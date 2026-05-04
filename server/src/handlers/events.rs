@@ -3,17 +3,26 @@
 //! This module provides HTTP handlers for event-related operations including
 //! listing, creating, updating, and deleting events.
 
-use axum::{extract::{Path, Query, State}, response::IntoResponse, response::Response, Json};
+use axum::{
+    extract::{Path, Query, State},
+    response::IntoResponse,
+    response::Response,
+    Json,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use uuid::Uuid;
 use std::time::Duration;
+use uuid::Uuid;
 
 use crate::cache::RedisCache;
 use crate::models::event::Event;
-use crate::utils::cursor_pagination::{CursorParams, CursorResponse, EventCursor, encode_cursor, decode_cursor};
+use crate::models::organizer_profile::OrganizerProfile;
+use crate::utils::cursor_pagination::{
+    decode_cursor, encode_cursor, CursorParams, CursorResponse, EventCursor,
+};
 use crate::utils::error::AppError;
+use crate::utils::pagination::{PaginatedResponse, PaginationParams};
 use crate::utils::response::success;
 
 /// Query parameters for searching events with filters
@@ -57,21 +66,30 @@ pub struct EventState {
     pub redis: RedisCache,
 }
 
+/// Event detail response that includes the organizer's public profile (Issue #486).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EventDetail {
+    #[serde(flatten)]
+    pub event: Event,
+    /// Organizer profile, if one has been created for the event's organizer wallet.
+    pub organizer_profile: Option<OrganizerProfile>,
+}
+
 /// Query parameters for filtering events
 #[derive(Debug, Deserialize)]
 pub struct EventFilters {
     /// Filter by organizer ID
     pub organizer_id: Option<Uuid>,
-    
+
     /// Filter by location (partial match)
     pub location: Option<String>,
-    
+
     /// Filter events starting after this date
     pub start_after: Option<DateTime<Utc>>,
-    
+
     /// Filter events starting before this date
     pub start_before: Option<DateTime<Utc>>,
-    
+
     /// Search in title and description
     pub search: Option<String>,
 }
@@ -229,7 +247,8 @@ pub async fn list_events(
             Ok(c) => Some(c),
             Err(e) => {
                 tracing::error!("Failed to encode cursor: {:?}", e);
-                return AppError::InternalServerError("Failed to encode cursor".to_string()).into_response();
+                return AppError::InternalServerError("Failed to encode cursor".to_string())
+                    .into_response();
             }
         }
     } else {
@@ -247,17 +266,18 @@ pub async fn list_events(
 ///
 /// # Caching
 /// Event details are cached in Redis with a 5-minute TTL to reduce database load.
+/// The response includes the organizer's public profile when available (Issue #486).
 pub async fn get_event(
     State(mut state): State<EventState>,
     axum::extract::Path(event_id): axum::extract::Path<Uuid>,
 ) -> Response {
     let cache_key = format!("event:detail:{}", event_id);
-    
+
     // Try to get from cache first
-    match state.redis.get::<Event>(&cache_key).await {
-        Ok(Some(event)) => {
+    match state.redis.get::<EventDetail>(&cache_key).await {
+        Ok(Some(detail)) => {
             tracing::debug!("Cache hit for event {}", event_id);
-            return success(event, "Event retrieved successfully (cached)").into_response();
+            return success(detail, "Event retrieved successfully (cached)").into_response();
         }
         Ok(None) => {
             tracing::debug!("Cache miss for event {}", event_id);
@@ -266,10 +286,10 @@ pub async fn get_event(
             tracing::warn!("Redis error, falling back to database: {:?}", e);
         }
     }
-    
+
     // Cache miss or error, fetch from database
     let event = match sqlx::query_as::<_, Event>(
-        "SELECT * FROM events WHERE id = $1 AND is_flagged = FALSE"
+        "SELECT * FROM events WHERE id = $1 AND is_flagged = FALSE",
     )
     .bind(event_id)
     .fetch_optional(&state.pool)
@@ -285,13 +305,45 @@ pub async fn get_event(
             return AppError::DatabaseError(e).into_response();
         }
     };
-    
+
+    // Fetch organizer profile by wallet address (Issue #486)
+    // Look up the organizer's Stellar wallet, then fetch their profile.
+    let organizer_profile = match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT wallet_address FROM organizers WHERE id = $1",
+    )
+    .bind(event.organizer_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(Some(wallet))) => {
+            match sqlx::query_as::<_, OrganizerProfile>(
+                "SELECT * FROM organizer_profiles WHERE address = $1",
+            )
+            .bind(&wallet)
+            .fetch_optional(&state.pool)
+            .await
+            {
+                Ok(profile) => profile,
+                Err(e) => {
+                    tracing::warn!("Failed to fetch organizer profile: {:?}", e);
+                    None
+                }
+            }
+        }
+        _ => None,
+    };
+
+    let detail = EventDetail {
+        event,
+        organizer_profile,
+    };
+
     // Store in cache for future requests
-    if let Err(e) = state.redis.set(&cache_key, &event, EVENT_CACHE_TTL).await {
+    if let Err(e) = state.redis.set(&cache_key, &detail, EVENT_CACHE_TTL).await {
         tracing::warn!("Failed to cache event {}: {:?}", event_id, e);
     }
-    
-    success(event, "Event retrieved successfully").into_response()
+
+    success(detail, "Event retrieved successfully").into_response()
 }
 
 /// Record a star rating for an event.
@@ -308,34 +360,35 @@ pub async fn submit_event_rating(
             .into_response();
     }
 
-    let ticket = match sqlx::query!(
-        r#"SELECT t.status AS status, tt.event_id AS event_id
+    let ticket = match sqlx::query_as::<_, (String, uuid::Uuid)>(
+        r#"SELECT t.status, tt.event_id
            FROM tickets t
            JOIN ticket_tiers tt ON t.ticket_tier_id = tt.id
            WHERE t.id = $1"#,
-        payload.ticket_id
     )
+    .bind(payload.ticket_id)
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(ticket) => match ticket {
-            Some(ticket) => ticket,
-            None => {
-                return AppError::NotFound(format!("Ticket with id '{}' not found", payload.ticket_id))
-                    .into_response();
-            }
-        },
+        Ok(Some((status, ticket_event_id))) => (status, ticket_event_id),
+        Ok(None) => {
+            return AppError::NotFound(format!("Ticket with id '{}' not found", payload.ticket_id))
+                .into_response();
+        }
         Err(e) => {
             tracing::error!("Failed to fetch ticket for rating: {:?}", e);
             return AppError::DatabaseError(e).into_response();
         }
     };
 
-    if ticket.event_id != event_id {
-        return AppError::Forbidden("Ticket does not belong to this event".to_string()).into_response();
+    let (ticket_status, ticket_event_id) = ticket;
+
+    if ticket_event_id != event_id {
+        return AppError::Forbidden("Ticket does not belong to this event".to_string())
+            .into_response();
     }
 
-    if ticket.status != "used" {
+    if ticket_status != "used" {
         return AppError::ValidationError(
             "Only attendees with a used ticket may leave a rating".to_string(),
         )
@@ -354,7 +407,7 @@ pub async fn submit_event_rating(
         "SELECT 1::bigint FROM event_ratings WHERE ticket_id = $1",
     )
     .bind(payload.ticket_id)
-    .fetch_optional(&mut tx)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(exists) => exists.is_some(),
@@ -378,7 +431,7 @@ pub async fn submit_event_rating(
     .bind(payload.ticket_id)
     .bind(payload.rating)
     .bind(payload.review)
-    .execute(&mut tx)
+    .execute(&mut *tx)
     .await
     {
         tracing::error!("Failed to insert event rating: {:?}", e);
@@ -390,7 +443,7 @@ pub async fn submit_event_rating(
     )
     .bind(event_id)
     .bind(payload.rating)
-    .fetch_one(&mut tx)
+    .fetch_one(&mut *tx)
     .await
     {
         Ok(event) => event,
@@ -588,37 +641,34 @@ pub async fn search_events(
 /// Flips the `is_flagged` status of the specified event.
 /// This endpoint is intended for admin use to moderate content.
 pub async fn toggle_event_flag(
-    State(state): State<EventState>,
+    State(mut state): State<EventState>,
     Path(event_id): Path<Uuid>,
 ) -> Response {
     // Fetch current flag status
-    let current_flagged = match sqlx::query_scalar::<_, bool>(
-        "SELECT is_flagged FROM events WHERE id = $1"
-    )
-    .bind(event_id)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(flagged)) => flagged,
-        Ok(None) => {
-            return AppError::NotFound(format!("Event with id '{}' not found", event_id))
-                .into_response();
-        }
-        Err(e) => {
-            tracing::error!("Failed to fetch event flag status: {:?}", e);
-            return AppError::DatabaseError(e).into_response();
-        }
-    };
+    let current_flagged =
+        match sqlx::query_scalar::<_, bool>("SELECT is_flagged FROM events WHERE id = $1")
+            .bind(event_id)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(Some(flagged)) => flagged,
+            Ok(None) => {
+                return AppError::NotFound(format!("Event with id '{}' not found", event_id))
+                    .into_response();
+            }
+            Err(e) => {
+                tracing::error!("Failed to fetch event flag status: {:?}", e);
+                return AppError::DatabaseError(e).into_response();
+            }
+        };
 
     // Toggle the flag
     let new_flagged = !current_flagged;
-    if let Err(e) = sqlx::query(
-        "UPDATE events SET is_flagged = $1 WHERE id = $2"
-    )
-    .bind(new_flagged)
-    .bind(event_id)
-    .execute(&state.pool)
-    .await
+    if let Err(e) = sqlx::query("UPDATE events SET is_flagged = $1 WHERE id = $2")
+        .bind(new_flagged)
+        .bind(event_id)
+        .execute(&state.pool)
+        .await
     {
         tracing::error!("Failed to update event flag: {:?}", e);
         return AppError::DatabaseError(e).into_response();
@@ -632,8 +682,9 @@ pub async fn toggle_event_flag(
 
     success(
         serde_json::json!({ "is_flagged": new_flagged }),
-        "Event flag toggled successfully"
-    ).into_response()
+        "Event flag toggled successfully",
+    )
+    .into_response()
 }
 
 #[cfg(test)]
@@ -650,7 +701,7 @@ mod tests {
             start_before: None,
             search: Some("concert".to_string()),
         };
-        
+
         assert!(filters.organizer_id.is_some());
         assert_eq!(filters.location.unwrap(), "New York");
     }

@@ -1,6 +1,7 @@
 pub mod cursor_pagination;
 pub mod error;
 pub mod logging;
+pub mod pagination;
 pub mod rate_limit;
 pub mod response;
 

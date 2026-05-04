@@ -38,19 +38,26 @@ async fn main() {
     tracing::info!("Configuration: PORT={}", config.port);
     tracing::info!("Configuration: RUST_ENV={}", config.rust_env);
     tracing::info!("Configuration: RUST_LOG={}", config.rust_log);
-    tracing::info!("Configuration: CORS_ALLOWED_ORIGINS={}", config.cors_allowed_origins);
+    tracing::info!(
+        "Configuration: CORS_ALLOWED_ORIGINS={}",
+        config.cors_allowed_origins
+    );
     tracing::info!("Configuration: SOROBAN_RPC_URL={}", config.soroban_rpc_url);
     tracing::info!("Configuration: REDIS_URL={}", config.redis_url);
     // Note: DATABASE_URL is strictly excluded from logging for security reasons.
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.database_url).await
+        .connect(&config.database_url)
+        .await
         .expect("Failed to connect to database");
 
     tracing::info!("Successfully connected to database");
 
-    sqlx::migrate!().run(&pool).await.expect("Failed to run migrations");
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
 
     tracing::info!("Migrations run successfully");
 
@@ -67,12 +74,15 @@ async fn main() {
         }
     };
 
-    let app: Router = agora_server::routes::create_routes(pool.clone(), config.clone(), redis).await;
+    let app: Router =
+        agora_server::routes::create_routes(pool.clone(), config.clone(), redis).await;
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     tracing::info!("🚀 Server running at http://localhost:{}", config.port);
     tracing::info!("Request IDs will be set via '{REQUEST_ID_HEADER}' header");
 
-    let listener = TcpListener::bind(addr).await.expect("Failed to bind address");
+    let listener = TcpListener::bind(addr)
+        .await
+        .expect("Failed to bind address");
 
     axum::serve(listener, app).await.expect("Server failed");
 }

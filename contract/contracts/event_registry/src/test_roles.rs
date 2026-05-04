@@ -27,7 +27,10 @@ fn create_test_event(
     event_id: String,
 ) {
     let payment_address = Address::generate(env);
-    let metadata_cid = String::from_str(env, "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi");
+    let metadata_cid = String::from_str(
+        env,
+        "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+    );
 
     let mut tiers = Map::new(env);
     let tier = TicketTier {
